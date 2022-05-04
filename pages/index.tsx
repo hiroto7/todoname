@@ -1,72 +1,522 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import axios from "axios";
+import type { tasks_v1 } from "googleapis";
+import type { NextPage } from "next";
+import { signIn, signOut, useSession } from "next-auth/react";
+import Head from "next/head";
+import React, { ReactNode, useState } from "react";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Container,
+  FloatingLabel,
+  Form,
+  Image,
+  Nav,
+  Navbar,
+  OverlayTrigger,
+  Placeholder,
+  PlaceholderButton,
+  Row,
+  Tooltip,
+} from "react-bootstrap";
+import useSWR from "swr";
+
+const NameSamplePart: React.FC<{
+  color: string;
+  title: string;
+  text: string;
+}> = ({ color, title, text }) => (
+  <OverlayTrigger
+    overlay={
+      <Tooltip id="tooltip1">
+        <div>{title}</div>
+        {text ? (
+          <></>
+        ) : (
+          <div>
+            <strong>なし</strong>
+          </div>
+        )}
+      </Tooltip>
+    }
+  >
+    {text ? (
+      <span
+        style={{
+          outlineColor: `var(--bs-${color})`,
+          outlineWidth: 1,
+          outlineStyle: "solid",
+        }}
+      >
+        {text}
+      </span>
+    ) : (
+      <i
+        className="bi bi-cursor-text"
+        style={{
+          color: `var(--bs-${color})`,
+          marginLeft: "-0.5em",
+          marginRight: "-0.5em",
+        }}
+      />
+    )}
+  </OverlayTrigger>
+);
+
+const dummyTasks = ["タスクその1", "タスクその2", "タスクその3"].map(
+  (title, id) => ({ id, title })
+);
+const ProfileSummary: React.FC<{
+  id: string;
+  name: ReactNode;
+  image: string;
+}> = ({ id, name, image }) => (
+  <>
+    <Row className="gx-3">
+      <Col xs="auto">
+        <Image
+          width={48}
+          height={48}
+          src={image}
+          alt="avatar photo"
+          roundedCircle
+        />
+      </Col>
+      <Col>
+        <div>{name}</div>
+        <div>
+          <small className="text-muted">{id}</small>
+        </div>
+      </Col>
+    </Row>
+  </>
+);
+
+const NameSample: React.FC<{
+  tasks: readonly ({ id: number; title: string } | tasks_v1.Schema$Task)[];
+  beginningText: string;
+  separator: string;
+  endText: string;
+}> = ({ tasks, beginningText, separator, endText }) => (
+  <>
+    <NameSamplePart
+      color="green"
+      title="先頭の固定テキスト"
+      text={beginningText}
+    />
+    {tasks
+      .map((task) => <span key={task.id}>{task.title}</span>)
+      .reduce((previousValue, currentValue) => (
+        <>
+          {previousValue}
+          <NameSamplePart
+            color="purple"
+            title="タスク同士のセパレーター"
+            text={separator}
+          />
+          {currentValue}
+        </>
+      ))}
+    <NameSamplePart color="orange" title="末尾の固定テキスト" text={endText} />
+  </>
+);
+
+const Sample: React.FC<{
+  tasks: readonly tasks_v1.Schema$Task[] | undefined;
+  beginningText: string;
+  separator: string;
+  endText: string;
+  screenName: string;
+  image: string;
+}> = ({ tasks, beginningText, separator, endText, screenName, image }) => {
+  const [showDummies, setShowDummies] = useState(false);
+  const showDummies1 = showDummies || (tasks && tasks.length === 0);
+
+  const tasks1 = showDummies1 ? dummyTasks : tasks;
+
+  const { data: session, status } = useSession();
+  const loading = status === "loading";
+
+  return (
+    <>
+      <div className="mb-3">
+        <Form.Check
+          inline
+          id="radio1"
+          checked={!showDummies1}
+          disabled={!tasks || tasks.length === 0}
+          onChange={() => setShowDummies(false)}
+          label="実際のタスクを表示"
+          type="radio"
+        />
+        <Form.Check
+          inline
+          id="radio2"
+          checked={showDummies1}
+          onChange={() => setShowDummies(true)}
+          label="ダミーのタスクを表示"
+          type="radio"
+        />
+      </div>
+
+      <ProfileSummary
+        id={`@${screenName}`}
+        name={
+          tasks1 ? (
+            <NameSample
+              tasks={tasks1}
+              beginningText={beginningText}
+              separator={separator}
+              endText={endText}
+            />
+          ) : (
+            <Placeholder as="div" animation="glow">
+              <Placeholder xs={6} />
+            </Placeholder>
+          )
+        }
+        image={image}
+      />
+    </>
+  );
+};
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+const loggedInLabel = (
+  <>
+    <i className="bi bi-check-circle-fill" /> ログイン済み
+  </>
+);
+
+const SignInButton: React.FC<{ provider: string; loading: boolean }> = ({
+  provider,
+  loading,
+}) =>
+  loading ? (
+    <PlaceholderButton
+      variant="secondary"
+      className="w-100"
+    ></PlaceholderButton>
+  ) : (
+    <Button
+      variant="secondary"
+      className="w-100"
+      onClick={() => signIn(provider)}
+    >
+      <i className="bi bi-box-arrow-in-right" /> ログイン
+    </Button>
+  );
+
+const Section: React.FC<{
+  screenName: string;
+  image: string;
+}> = ({ screenName, image }) => {
+  const {
+    data: tasklists,
+    error: tasklistsError,
+    mutate: tasklistsMutate,
+  } = useSWR<readonly tasks_v1.Schema$TaskList[]>("/api/tasklists", fetcher);
+
+  const [tasklist0, setTasklist] = useState<string>();
+  const tasklist = tasklist0 ?? tasklists?.[0]?.id;
+
+  const {
+    data: tasks,
+    error: taskError,
+    mutate: taskMutate,
+  } = useSWR<readonly tasks_v1.Schema$Task[]>(
+    tasklist && `/api/tasks?tasklist=${tasklist}`,
+    fetcher
+  );
+
+  const [normalName, setNormalName] = useState("");
+  const [beginningText, setBeginningText] = useState("");
+  const [separator, setSeparator] = useState("、");
+  const [endText, setEndText] = useState("");
+
+  return (
+    <>
+      <h2>To-Doリストを選択</h2>
+      <p>
+        選択したTo-Doリストの内容から名前が生成されます。選択したリストに機密情報が含まれないことを確認してください。
+      </p>
+
+      {tasklists ? (
+        tasklist !== undefined && tasklist !== null ? (
+          <FloatingLabel controlId="floatingSelectGrid" label="To-Doリスト">
+            <Form.Select
+              value={tasklist}
+              onChange={(event) => setTasklist(event.target.value)}
+            >
+              {tasklists?.map((tasklist) => (
+                <option
+                  key={tasklist.id}
+                  value={tasklist.id!}
+                  onClick={() => alert(tasklist.title)}
+                >
+                  {tasklist.title}
+                </option>
+              ))}
+            </Form.Select>
+          </FloatingLabel>
+        ) : (
+          <Alert variant="warning">
+            To-Do リストがひとつも作成されていません。
+          </Alert>
+        )
+      ) : (
+        <Placeholder as="p" animation="glow">
+          <Placeholder xs={12} />
+        </Placeholder>
+      )}
+
+      {downCaret}
+
+      <h2>名前の生成方法を指定</h2>
+
+      <Row xs={1} md={2} className="g-4 justify-content-center">
+        <Col md={7}>
+          <Card body>
+            <Card.Title>タスクがあるとき</Card.Title>
+            <Card.Text>
+              To-Doリスト中の未完了のタスクに、これらの3つのテキストが組み合わさって名前が生成されます。
+            </Card.Text>
+            <Row className="gy-2 mb-3">
+              <Col xl>
+                <FloatingLabel
+                  controlId="beginningText"
+                  label="先頭の固定テキスト"
+                >
+                  <Form.Control
+                    value={beginningText}
+                    placeholder="先頭の固定テキスト"
+                    style={{ borderColor: "var(--bs-green)" }}
+                    onChange={(event) => setBeginningText(event.target.value)}
+                  />
+                </FloatingLabel>
+              </Col>
+              <Col xl>
+                <FloatingLabel
+                  controlId="separator"
+                  label="タスク同士のセパレーター"
+                >
+                  <datalist id="separator-example">
+                    <option value="、"></option>
+                    <option value=" / "></option>
+                  </datalist>
+                  <Form.Control
+                    list="separator-example"
+                    placeholder="、"
+                    value={separator}
+                    style={{ borderColor: "var(--bs-purple)" }}
+                    onChange={(event) => setSeparator(event.target.value)}
+                  />
+                </FloatingLabel>
+              </Col>
+              <Col xl>
+                <FloatingLabel controlId="endText" label="末尾の固定テキスト">
+                  <Form.Control
+                    value={endText}
+                    placeholder="末尾の固定テキスト"
+                    style={{ borderColor: "var(--bs-orange)" }}
+                    onChange={(event) => setEndText(event.target.value)}
+                  />
+                </FloatingLabel>
+              </Col>
+            </Row>
+            <Card className="mt-3">
+              <Card.Header>サンプル</Card.Header>
+              <Card.Body>
+                <Sample
+                  tasks={tasks}
+                  beginningText={beginningText}
+                  separator={separator}
+                  endText={endText}
+                  screenName={screenName}
+                  image={image}
+                />
+              </Card.Body>
+            </Card>
+          </Card>
+        </Col>
+        <Col md={5}>
+          <Card body>
+            <Card.Title>タスクがないとき</Card.Title>
+            <Card.Text>
+              To-Doリストに未完了タスクがひとつもないときは、ここに入力したテキストがそのまま名前になります。
+            </Card.Text>
+            <FloatingLabel
+              controlId="normalName"
+              label="タスクがないときの名前"
+              className="mb-3"
+            >
+              <Form.Control
+                value={normalName}
+                placeholder="タスクがないときの名前"
+                onChange={(event) => setNormalName(event.target.value)}
+              />
+            </FloatingLabel>
+            <Card>
+              <Card.Header>サンプル</Card.Header>
+              <Card.Body>
+                <ProfileSummary
+                  id={`@${screenName}`}
+                  name={normalName || <Placeholder xs={6} />}
+                  image={image}
+                />
+              </Card.Body>
+            </Card>
+          </Card>
+        </Col>
+      </Row>
+
+      {downCaret}
+
+      <div className="d-grid mb-3">
+        <Button
+          size="lg"
+          disabled={tasklist === undefined || normalName.length === 0}
+          onClick={() =>
+            axios.post("/api/update", {
+              tasklist,
+              normalName,
+              beginningText,
+              separator,
+              endText,
+            })
+          }
+        >
+          名前を書き換える
+        </Button>
+      </div>
+    </>
+  );
+};
+
+const downCaret = (
+  <div className="text-center my-4">
+    <i className="bi bi-caret-down-fill display-6" />
+  </div>
+);
 
 const Home: NextPage = () => {
+  const { data: session, status } = useSession();
+  const loading = status === "loading";
+
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <meta name="description" content="Generated by create next app" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <>
+      <Navbar bg="dark" variant="dark">
+        <Container>
+          <Navbar.Brand>To-Do Name</Navbar.Brand>
+          <Navbar.Toggle />
+          <Navbar.Collapse className="justify-content-end">
+            {session && (
+              <Button variant="outline-secondary" onClick={() => signOut()}>
+                <i className="bi bi-box-arrow-left" /> ログアウト
+              </Button>
+            )}
+            <Nav>
+              <Nav.Link
+                href="https://github.com/hiroto7/todoname"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <i className="bi bi-github" /> GitHub
+              </Nav.Link>
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
+      <Container className="mt-3">
+        <Head>
+          <title>To-Do Name</title>
+          <meta name="description" content="Generated by create next app" />
+          <link rel="icon" href="/favicon.ico" />
+        </Head>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+        <h1>To-Do Name</h1>
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.tsx</code>
+        <h2>アカウントにログイン</h2>
+        <p>
+          まず、TwitterアカウントとGoogleアカウントの<strong>両方に</strong>
+          ログインします。
         </p>
 
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h2>Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+        <Row xs={1} md={2} className="g-4 justify-content-center">
+          <Col lg={5} xl={4}>
+            <Card body>
+              <Card.Title>
+                <i className="bi bi-twitter" /> Twitter
+              </Card.Title>
+              <Card.Text className="text-muted">
+                ログインしたアカウントのプロフィールの名前が書き換えられます。
+              </Card.Text>
+              {session?.twitter ? (
+                <>
+                  <Card.Text className="text-success text-center">
+                    {loggedInLabel}
+                  </Card.Text>
 
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h2>Learn &rarr;</h2>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
+                  <ProfileSummary
+                    id={`@${session.twitter.screenName}`}
+                    name={session.twitter.name}
+                    image={session.twitter.image!}
+                  />
+                </>
+              ) : (
+                <SignInButton provider="twitter" loading={loading} />
+              )}
+            </Card>
+          </Col>
+          <Col lg={5} xl={4}>
+            <Card body>
+              <Card.Title>
+                <i className="bi bi-google" /> Google
+              </Card.Title>
+              <Card.Text className="text-muted">
+                ログインしたアカウントのGoogle Tasksの内容が使用されます。
+              </Card.Text>
+              {session?.google ? (
+                <>
+                  <Card.Text className="text-success text-center">
+                    {loggedInLabel}
+                  </Card.Text>
 
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className={styles.card}
-          >
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
+                  <ProfileSummary
+                    id={session.google.email!}
+                    name={session.google.name}
+                    image={session.google.image!}
+                  />
+                </>
+              ) : (
+                <SignInButton provider="google" loading={loading} />
+              )}
+            </Card>
+          </Col>
+        </Row>
 
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
+        {session?.twitter && session.google ? (
+          <>
+            {downCaret}
+            <Section
+              screenName={session.twitter.screenName}
+              image={session.twitter.image!}
+            />
+          </>
+        ) : (
+          <div className="text-muted">
+            {downCaret}
+            <p className="text-center">To-Doリストを選択</p>
+            {downCaret}
+            <p className="text-center">名前の生成方法を指定</p>
+          </div>
+        )}
+      </Container>
+    </>
+  );
+};
 
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <span className={styles.logo}>
-            <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-          </span>
-        </a>
-      </footer>
-    </div>
-  )
-}
-
-export default Home
+export default Home;
