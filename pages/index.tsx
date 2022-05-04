@@ -5,11 +5,13 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 import React, { ReactNode, useState } from "react";
 import {
-  Alert,
+  Badge,
   Button,
   Card,
   Col,
   Container,
+  Dropdown,
+  DropdownButton,
   FloatingLabel,
   Form,
   Image,
@@ -17,7 +19,6 @@ import {
   Navbar,
   OverlayTrigger,
   Placeholder,
-  PlaceholderButton,
   Row,
   Tooltip,
 } from "react-bootstrap";
@@ -196,10 +197,10 @@ const SignInButton: React.FC<{ provider: string; loading: boolean }> = ({
   loading,
 }) =>
   loading ? (
-    <PlaceholderButton
+    <Placeholder.Button
       variant="secondary"
       className="w-100"
-    ></PlaceholderButton>
+    ></Placeholder.Button>
   ) : (
     <Button
       variant="secondary"
@@ -220,15 +221,16 @@ const Section: React.FC<{
     mutate: tasklistsMutate,
   } = useSWR<readonly tasks_v1.Schema$TaskList[]>("/api/tasklists", fetcher);
 
-  const [tasklist0, setTasklist] = useState<string>();
-  const tasklist = tasklist0 ?? tasklists?.[0]?.id;
+  const [tasklistId0, setTasklistId] = useState<string>();
+  const tasklistId = tasklistId0 ?? tasklists?.[0]?.id;
+  const tasklist = tasklists?.find((tasklist) => tasklist.id === tasklistId);
 
   const {
     data: tasks,
     error: taskError,
     mutate: taskMutate,
   } = useSWR<readonly tasks_v1.Schema$Task[]>(
-    tasklist && `/api/tasks?tasklist=${tasklist}`,
+    tasklistId && `/api/tasks?tasklist=${tasklistId}`,
     fetcher
   );
 
@@ -244,34 +246,90 @@ const Section: React.FC<{
         選択したTo-Doリストの内容から名前が生成されます。選択したリストに機密情報が含まれないことを確認してください。
       </p>
 
-      {tasklists ? (
-        tasklist !== undefined && tasklist !== null ? (
-          <FloatingLabel controlId="floatingSelectGrid" label="To-Doリスト">
-            <Form.Select
-              value={tasklist}
-              onChange={(event) => setTasklist(event.target.value)}
-            >
-              {tasklists?.map((tasklist) => (
-                <option
-                  key={tasklist.id}
-                  value={tasklist.id!}
-                  onClick={() => alert(tasklist.title)}
-                >
-                  {tasklist.title}
-                </option>
-              ))}
-            </Form.Select>
-          </FloatingLabel>
-        ) : (
-          <Alert variant="warning">
-            To-Do リストがひとつも作成されていません。
-          </Alert>
-        )
-      ) : (
-        <Placeholder as="p" animation="glow">
-          <Placeholder xs={12} />
-        </Placeholder>
-      )}
+      <Row className="justify-content-center">
+        <Col sm={10} md={8} lg={6}>
+          <Card body>
+            <Row>
+              {tasklist ? (
+                <Col>
+                  <Card.Title>
+                    <i className="bi bi-list-task" /> {tasklist.title}
+                  </Card.Title>
+                  <Card.Text>
+                    <small className="text-muted">
+                      {new Date(tasklist.updated!).toLocaleString()}
+                    </small>
+                  </Card.Text>
+                </Col>
+              ) : (
+                <Col xs={9} xl={10}>
+                  <Placeholder as={Card.Title} animation="glow">
+                    <Placeholder xs={6} />
+                  </Placeholder>
+                  <Placeholder as={Card.Text} animation="glow">
+                    <Placeholder xs={4} size="sm" />
+                  </Placeholder>
+                </Col>
+              )}
+              {tasklists ? (
+                <Col xs="auto">
+                  <DropdownButton
+                    id="tasklist-dropdown-button"
+                    title="変更"
+                    variant="secondary"
+                  >
+                    {tasklists.map((tasklist) => (
+                      <Dropdown.Item
+                        key={tasklist.id}
+                        onClick={() => setTasklistId(tasklist.id!)}
+                      >
+                        <div>{tasklist.title}</div>
+                        <div>
+                          <small>
+                            {new Date(tasklist.updated!).toLocaleString()}
+                          </small>
+                        </div>
+                      </Dropdown.Item>
+                    ))}
+                  </DropdownButton>
+                </Col>
+              ) : (
+                <Col xs={3} xl={2}>
+                  <Placeholder.Button
+                    variant="secondary"
+                    xs={12}
+                  ></Placeholder.Button>
+                </Col>
+              )}
+            </Row>
+            {tasks ? (
+              tasks.length > 0 ? (
+                <div>
+                  {tasks
+                    .map((task) => (
+                      <Badge pill bg="dark" key={task.id}>
+                        {task.title}
+                      </Badge>
+                    ))
+                    .reduce((previousValue, currentValue) => (
+                      <>
+                        {previousValue} {currentValue}
+                      </>
+                    ))}
+                </div>
+              ) : (
+                <Card.Text>
+                  <i>未完了のタスクはありません</i>
+                </Card.Text>
+              )
+            ) : (
+              <Placeholder as={Card.Text} animation="glow">
+                <Placeholder xs={6} />
+              </Placeholder>
+            )}
+          </Card>
+        </Col>
+      </Row>
 
       {downCaret}
 
@@ -378,10 +436,10 @@ const Section: React.FC<{
       <div className="d-grid mb-3">
         <Button
           size="lg"
-          disabled={tasklist === undefined || normalName.length === 0}
+          disabled={tasklistId === undefined || normalName.length === 0}
           onClick={() =>
             axios.post("/api/update", {
-              tasklist,
+              tasklist: tasklistId,
               normalName,
               beginningText,
               separator,
@@ -446,7 +504,7 @@ const Home: NextPage = () => {
         </p>
 
         <Row xs={1} md={2} className="g-4 justify-content-center">
-          <Col lg={5} xl={4}>
+          <Col sm={10} lg={5} xl={4}>
             <Card body>
               <Card.Title>
                 <i className="bi bi-twitter" /> Twitter
@@ -471,7 +529,7 @@ const Home: NextPage = () => {
               )}
             </Card>
           </Col>
-          <Col lg={5} xl={4}>
+          <Col sm={10} lg={5} xl={4}>
             <Card body>
               <Card.Title>
                 <i className="bi bi-google" /> Google
