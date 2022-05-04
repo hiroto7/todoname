@@ -14,6 +14,7 @@ const auth: NextApiHandler<unknown> = async (req, res) => {
   // For more information on each option (and a full list of options) go to
   // https://next-auth.js.org/configuration/options
   return NextAuth(req, res, {
+    secret: process.env.NEXTAUTH_SECRET,
     // https://next-auth.js.org/configuration/providers/oauth
     providers: [
       GoogleProvider({
