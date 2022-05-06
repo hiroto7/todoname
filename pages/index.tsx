@@ -307,7 +307,10 @@ const Section: React.FC<{
                   </Card.Title>
                   <Card.Text>
                     <small className="text-muted">
-                      {new Date(tasklist.updated!).toLocaleString()}
+                      {new Date(tasklist.updated!).toLocaleString(undefined, {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
                     </small>
                   </Card.Text>
                 </Col>
@@ -336,7 +339,13 @@ const Section: React.FC<{
                         <div>{tasklist.title}</div>
                         <div>
                           <small>
-                            {new Date(tasklist.updated!).toLocaleString()}
+                            {new Date(tasklist.updated!).toLocaleString(
+                              undefined,
+                              {
+                                dateStyle: "short",
+                                timeStyle: "short",
+                              }
+                            )}
                           </small>
                         </div>
                       </Dropdown.Item>
