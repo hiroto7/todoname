@@ -24,23 +24,14 @@ import {
 } from "react-bootstrap";
 import useSWR from "swr";
 
-const NameSamplePart: React.FC<{
+const NameSampleComponent: React.FC<{
   color: string;
   title: string;
   text: string;
 }> = ({ color, title, text }) => (
   <OverlayTrigger
     overlay={
-      <Tooltip id="tooltip1">
-        <div>{title}</div>
-        {text ? (
-          <></>
-        ) : (
-          <div>
-            <strong>なし</strong>
-          </div>
-        )}
-      </Tooltip>
+      <Tooltip id="tooltip1">{text ? title : `${title}はありません`}</Tooltip>
     }
   >
     {text ? (
@@ -95,9 +86,13 @@ const ProfileSummary: React.FC<{
   </>
 );
 
-const beginningTextName = "名前の先頭";
-const separatorName = "セパレーター";
-const endTextName = "名前の末尾";
+const beginningTextTitle = "名前の先頭";
+const separatorTitle = "セパレーター";
+const endTextTitle = "名前の末尾";
+
+const beginningTextColor = "green";
+const separatorColor = "purple";
+const endTextColor = "orange";
 
 const NameSample: React.FC<{
   tasks: readonly ({ id: number; title: string } | tasks_v1.Schema$Task)[];
@@ -106,9 +101,9 @@ const NameSample: React.FC<{
   endText: string;
 }> = ({ tasks, beginningText, separator, endText }) => (
   <>
-    <NameSamplePart
-      color="green"
-      title={beginningTextName}
+    <NameSampleComponent
+      color={beginningTextColor}
+      title={beginningTextTitle}
       text={beginningText}
     />
     {tasks
@@ -116,15 +111,19 @@ const NameSample: React.FC<{
       .reduce((previousValue, currentValue) => (
         <>
           {previousValue}
-          <NameSamplePart
-            color="purple"
-            title={separatorName}
+          <NameSampleComponent
+            color={separatorColor}
+            title={separatorTitle}
             text={separator}
           />
           {currentValue}
         </>
       ))}
-    <NameSamplePart color="orange" title={endTextName} text={endText} />
+    <NameSampleComponent
+      color={endTextColor}
+      title={endTextTitle}
+      text={endText}
+    />
   </>
 );
 
@@ -225,6 +224,38 @@ const SignInButton: React.FC<{ provider: string; loading: boolean }> = ({
       <i className="bi bi-box-arrow-in-right" /> ログイン
     </Button>
   );
+
+const NameComponentInput: React.FC<{
+  color: string;
+  text: string;
+  name: string;
+  title: string;
+  examples?: readonly string[];
+  onChange: (text: string) => void;
+}> = ({ color, title, text, name, examples, onChange }) => {
+  const datalistId = `${name}Datalist`;
+  return (
+    <Form.Group as={Row} xs={2}>
+      <Form.Label column>{title}</Form.Label>
+      <Col>
+        {examples && (
+          <datalist id={datalistId}>
+            {examples.map((example) => (
+              <option key={example} value={example} />
+            ))}
+          </datalist>
+        )}
+        <Form.Control
+          value={text}
+          list={datalistId}
+          placeholder="なし"
+          style={{ borderColor: `var(--bs-${color})` }}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </Col>
+    </Form.Group>
+  );
+};
 
 const Section: React.FC<{
   screenName: string;
@@ -363,46 +394,35 @@ const Section: React.FC<{
                 <Card.Text>
                   これら3つのテキストを、To-Doリスト中の未完了タスクに組み合わせて名前を生成します。
                 </Card.Text>
-                <div className="d-grid gap-2">
-                  <Form.Group as={Row} xs={2}>
-                    <Form.Label column>{beginningTextName}</Form.Label>
-                    <Col>
-                      <Form.Control
-                        value={beginningText}
-                        style={{ borderColor: "var(--bs-green)" }}
-                        onChange={(event) =>
-                          setBeginningText(event.target.value)
-                        }
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} xs={2}>
-                    <Form.Label column>{separatorName}</Form.Label>
-                    <Col>
-                      <datalist id="separator-example">
-                        <option value="、"></option>
-                        <option value=" / "></option>
-                      </datalist>
-                      <Form.Control
-                        list="separator-example"
-                        placeholder="、"
-                        value={separator}
-                        style={{ borderColor: "var(--bs-purple)" }}
-                        onChange={(event) => setSeparator(event.target.value)}
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} xs={2}>
-                    <Form.Label column>{endTextName}</Form.Label>
-                    <Col>
-                      <Form.Control
-                        value={endText}
-                        style={{ borderColor: "var(--bs-orange)" }}
-                        onChange={(event) => setEndText(event.target.value)}
-                      />
-                    </Col>
-                  </Form.Group>
-                </div>
+                <fieldset className="d-grid gap-2">
+                  <NameComponentInput
+                    name="beginningText"
+                    title={beginningTextTitle}
+                    examples={[
+                      `${normalName}@`,
+                      `${normalName}/`,
+                      `${normalName} `,
+                    ]}
+                    text={beginningText}
+                    color={beginningTextColor}
+                    onChange={setBeginningText}
+                  />
+                  <NameComponentInput
+                    name="separator"
+                    title={separatorTitle}
+                    examples={[`、`, `/`]}
+                    text={separator}
+                    color={separatorColor}
+                    onChange={setSeparator}
+                  />
+                  <NameComponentInput
+                    name="endText"
+                    title={endTextTitle}
+                    text={endText}
+                    color={endTextColor}
+                    onChange={setEndText}
+                  />
+                </fieldset>
               </Col>
               <Col>
                 <Sample1
@@ -426,6 +446,7 @@ const Section: React.FC<{
                 </Card.Text>
                 <Form.Control
                   value={normalName}
+                  placeholder="なし"
                   onChange={(event) => setNormalName(event.target.value)}
                 />
               </Col>
