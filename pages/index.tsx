@@ -95,6 +95,10 @@ const ProfileSummary: React.FC<{
   </>
 );
 
+const beginningTextName = "名前の先頭";
+const separatorName = "セパレーター";
+const endTextName = "名前の末尾";
+
 const NameSample: React.FC<{
   tasks: readonly ({ id: number; title: string } | tasks_v1.Schema$Task)[];
   beginningText: string;
@@ -104,7 +108,7 @@ const NameSample: React.FC<{
   <>
     <NameSamplePart
       color="green"
-      title="先頭の固定テキスト"
+      title={beginningTextName}
       text={beginningText}
     />
     {tasks
@@ -114,17 +118,34 @@ const NameSample: React.FC<{
           {previousValue}
           <NameSamplePart
             color="purple"
-            title="タスク同士のセパレーター"
+            title={separatorName}
             text={separator}
           />
           {currentValue}
         </>
       ))}
-    <NameSamplePart color="orange" title="末尾の固定テキスト" text={endText} />
+    <NameSamplePart color="orange" title={endTextName} text={endText} />
   </>
 );
 
-const Sample: React.FC<{
+const Sample0: React.FC<{
+  screenName: string;
+  normalName: string;
+  image: string;
+}> = ({ screenName, normalName, image }) => (
+  <Card>
+    <Card.Header>サンプル</Card.Header>
+    <Card.Body>
+      <ProfileSummary
+        id={`@${screenName}`}
+        name={normalName || <i>名前を入力してください</i>}
+        image={image}
+      />
+    </Card.Body>
+  </Card>
+);
+
+const Sample1: React.FC<{
   tasks: readonly tasks_v1.Schema$Task[] | undefined;
   beginningText: string;
   separator: string;
@@ -137,50 +158,44 @@ const Sample: React.FC<{
 
   const tasks1 = showDummies1 ? dummyTasks : tasks;
 
-  const { data: session, status } = useSession();
-  const loading = status === "loading";
-
   return (
-    <>
-      <div className="mb-3">
-        <Form.Check
-          inline
-          id="radio1"
-          checked={!showDummies1}
-          disabled={!tasks || tasks.length === 0}
-          onChange={() => setShowDummies(false)}
-          label="実際のタスクを表示"
-          type="radio"
-        />
-        <Form.Check
-          inline
-          id="radio2"
-          checked={showDummies1}
-          onChange={() => setShowDummies(true)}
-          label="ダミーのタスクを表示"
-          type="radio"
-        />
-      </div>
-
-      <ProfileSummary
-        id={`@${screenName}`}
-        name={
-          tasks1 ? (
-            <NameSample
-              tasks={tasks1}
-              beginningText={beginningText}
-              separator={separator}
-              endText={endText}
+    <Card>
+      <Card.Header>
+        <Row className="justify-content-between">
+          <Col xs="auto">サンプル</Col>
+          <Col xs="auto">
+            <Form.Check
+              id="check1"
+              type="checkbox"
+              checked={showDummies1}
+              disabled={showDummies && (!tasks || tasks.length === 0)}
+              onChange={() => setShowDummies(!showDummies)}
+              label="ダミーで表示"
             />
-          ) : (
-            <Placeholder as="div" animation="glow">
-              <Placeholder xs={6} />
-            </Placeholder>
-          )
-        }
-        image={image}
-      />
-    </>
+          </Col>
+        </Row>
+      </Card.Header>
+      <Card.Body>
+        <ProfileSummary
+          id={`@${screenName}`}
+          name={
+            tasks1 ? (
+              <NameSample
+                tasks={tasks1}
+                beginningText={beginningText}
+                separator={separator}
+                endText={endText}
+              />
+            ) : (
+              <Placeholder as="div" animation="glow">
+                <Placeholder xs={6} />
+              </Placeholder>
+            )
+          }
+          image={image}
+        />
+      </Card.Body>
+    </Card>
   );
 };
 
@@ -339,98 +354,89 @@ const Section: React.FC<{
 
       <h2>名前の生成方法を指定</h2>
 
-      <Row xs={1} md={2} className="g-4 justify-content-center">
-        <Col md={7}>
+      <Row xs={1} className="g-4 justify-content-center">
+        <Col xs={12} lg={10} xl={9} className="d-grid gap-4">
           <Card body>
-            <Card.Title>タスクがあるとき</Card.Title>
-            <Card.Text>
-              To-Doリスト中の未完了のタスクに、これらの3つのテキストが組み合わさって名前が生成されます。
-            </Card.Text>
-            <Row className="gy-2 mb-3">
-              <Col xl>
-                <FloatingLabel
-                  controlId="beginningText"
-                  label="先頭の固定テキスト"
-                >
-                  <Form.Control
-                    value={beginningText}
-                    placeholder="先頭の固定テキスト"
-                    style={{ borderColor: "var(--bs-green)" }}
-                    onChange={(event) => setBeginningText(event.target.value)}
-                  />
-                </FloatingLabel>
+            <Row className="gx-5 gy-3 align-items-center" xs={1} md={2}>
+              <Col>
+                <Card.Title>タスクがあるとき</Card.Title>
+                <Card.Text>
+                  これら3つのテキストを、To-Doリスト中の未完了タスクに組み合わせて名前を生成します。
+                </Card.Text>
+                <div className="d-grid gap-2">
+                  <Form.Group as={Row} xs={2}>
+                    <Form.Label column>{beginningTextName}</Form.Label>
+                    <Col>
+                      <Form.Control
+                        value={beginningText}
+                        style={{ borderColor: "var(--bs-green)" }}
+                        onChange={(event) =>
+                          setBeginningText(event.target.value)
+                        }
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} xs={2}>
+                    <Form.Label column>{separatorName}</Form.Label>
+                    <Col>
+                      <datalist id="separator-example">
+                        <option value="、"></option>
+                        <option value=" / "></option>
+                      </datalist>
+                      <Form.Control
+                        list="separator-example"
+                        placeholder="、"
+                        value={separator}
+                        style={{ borderColor: "var(--bs-purple)" }}
+                        onChange={(event) => setSeparator(event.target.value)}
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} xs={2}>
+                    <Form.Label column>{endTextName}</Form.Label>
+                    <Col>
+                      <Form.Control
+                        value={endText}
+                        style={{ borderColor: "var(--bs-orange)" }}
+                        onChange={(event) => setEndText(event.target.value)}
+                      />
+                    </Col>
+                  </Form.Group>
+                </div>
               </Col>
-              <Col xl>
-                <FloatingLabel
-                  controlId="separator"
-                  label="タスク同士のセパレーター"
-                >
-                  <datalist id="separator-example">
-                    <option value="、"></option>
-                    <option value=" / "></option>
-                  </datalist>
-                  <Form.Control
-                    list="separator-example"
-                    placeholder="、"
-                    value={separator}
-                    style={{ borderColor: "var(--bs-purple)" }}
-                    onChange={(event) => setSeparator(event.target.value)}
-                  />
-                </FloatingLabel>
-              </Col>
-              <Col xl>
-                <FloatingLabel controlId="endText" label="末尾の固定テキスト">
-                  <Form.Control
-                    value={endText}
-                    placeholder="末尾の固定テキスト"
-                    style={{ borderColor: "var(--bs-orange)" }}
-                    onChange={(event) => setEndText(event.target.value)}
-                  />
-                </FloatingLabel>
-              </Col>
-            </Row>
-            <Card className="mt-3">
-              <Card.Header>サンプル</Card.Header>
-              <Card.Body>
-                <Sample
+              <Col>
+                <Sample1
                   tasks={tasks}
                   beginningText={beginningText}
                   separator={separator}
                   endText={endText}
                   screenName={screenName}
                   image={image}
+                  key={2}
                 />
-              </Card.Body>
-            </Card>
+              </Col>
+            </Row>
           </Card>
-        </Col>
-        <Col md={5}>
           <Card body>
-            <Card.Title>タスクがないとき</Card.Title>
-            <Card.Text>
-              To-Doリストに未完了タスクがひとつもないときは、ここに入力したテキストがそのまま名前になります。
-            </Card.Text>
-            <FloatingLabel
-              controlId="normalName"
-              label="タスクがないときの名前"
-              className="mb-3"
-            >
-              <Form.Control
-                value={normalName}
-                placeholder="タスクがないときの名前"
-                onChange={(event) => setNormalName(event.target.value)}
-              />
-            </FloatingLabel>
-            <Card>
-              <Card.Header>サンプル</Card.Header>
-              <Card.Body>
-                <ProfileSummary
-                  id={`@${screenName}`}
-                  name={normalName || <Placeholder xs={6} />}
+            <Row className="gx-5 gy-3 align-items-center" xs={1} md={2}>
+              <Col>
+                <Card.Title>タスクがないとき</Card.Title>
+                <Card.Text>
+                  未完了タスクがないとき、ここに入力したテキストがそのまま名前になります。
+                </Card.Text>
+                <Form.Control
+                  value={normalName}
+                  onChange={(event) => setNormalName(event.target.value)}
+                />
+              </Col>
+              <Col>
+                <Sample0
+                  normalName={normalName}
+                  screenName={screenName}
                   image={image}
                 />
-              </Card.Body>
-            </Card>
+              </Col>
+            </Row>
           </Card>
         </Col>
       </Row>
