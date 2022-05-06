@@ -86,9 +86,9 @@ const ProfileSummary: React.FC<{
   </>
 );
 
-const beginningTextTitle = "名前の先頭";
+const beginningTextTitle = "先頭テキスト";
 const separatorTitle = "セパレーター";
-const endTextTitle = "名前の末尾";
+const endTextTitle = "末尾テキスト";
 
 const beginningTextColor = "green";
 const separatorColor = "purple";
