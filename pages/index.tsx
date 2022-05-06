@@ -55,7 +55,7 @@ const NameSamplePart: React.FC<{
       </span>
     ) : (
       <i
-        className="bi bi-cursor-text"
+        className="bi bi-cursor-text position-relative"
         style={{
           color: `var(--bs-${color})`,
           marginLeft: "-0.5em",
