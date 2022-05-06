@@ -242,8 +242,12 @@ const Section: React.FC<{
   return (
     <>
       <h2>To-Doリストを選択</h2>
+      <p className="mb-0">選択したTo-Doリストの内容から名前が生成されます。</p>
       <p>
-        選択したTo-Doリストの内容から名前が生成されます。選択したリストに機密情報が含まれないことを確認してください。
+        <small className="text-warning">
+          <i className="bi bi-exclamation-triangle-fill" />{" "}
+          選択したリストに機密情報が含まれないことを確認してください。
+        </small>
       </p>
 
       <Row className="justify-content-center">
