@@ -275,7 +275,7 @@ const Section: React.FC<{
     error: taskError,
     mutate: taskMutate,
   } = useSWR<readonly tasks_v1.Schema$Task[]>(
-    tasklistId && `/api/tasks?tasklist=${tasklistId}`,
+    tasklistId && `/api/tasklists/${tasklistId}/tasks`,
     fetcher
   );
 
