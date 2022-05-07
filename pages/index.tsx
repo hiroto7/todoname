@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { tasks_v1 } from "googleapis";
+import type { oauth2_v2, tasks_v1 } from "googleapis";
 import type { NextPage } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
@@ -522,14 +522,16 @@ type TwitterUser = Required<
 >;
 
 const Home: NextPage = () => {
-  const { data: session, status } = useSession();
-  const loading = status === "loading";
+  const { data: session } = useSession();
 
   const {
     data: twitter,
-    error,
+    error: twitterError,
     mutate,
   } = useSWR<TwitterUser>("/api/twitter", fetcher);
+
+  const { data: google, error: googleError } =
+    useSWR<oauth2_v2.Schema$Userinfo>("/api/google", fetcher);
 
   return (
     <>
@@ -579,7 +581,7 @@ const Home: NextPage = () => {
               <Card.Text className="text-muted">
                 ログインしたアカウントのプロフィールの名前が書き換えられます。
               </Card.Text>
-              {twitter ? (
+              {twitter && twitterError === undefined ? (
                 <>
                   <Card.Text className="text-success text-center">
                     {loggedInLabel}
@@ -590,7 +592,7 @@ const Home: NextPage = () => {
               ) : (
                 <SignInButton
                   provider="twitter"
-                  loading={!twitter && error === undefined}
+                  loading={!twitter && twitterError === undefined}
                 />
               )}
             </Card>
@@ -603,26 +605,32 @@ const Home: NextPage = () => {
               <Card.Text className="text-muted">
                 ログインしたアカウントのGoogle Tasksの内容が使用されます。
               </Card.Text>
-              {session?.google ? (
+              {google && googleError === undefined ? (
                 <>
                   <Card.Text className="text-success text-center">
                     {loggedInLabel}
                   </Card.Text>
 
                   <ProfileSummary
-                    id={session.google.email!}
-                    name={session.google.name}
-                    image={session.google.image!}
+                    id={google.email!}
+                    name={google.name}
+                    image={google.picture!}
                   />
                 </>
               ) : (
-                <SignInButton provider="google" loading={loading} />
+                <SignInButton
+                  provider="google"
+                  loading={!google && googleError === undefined}
+                />
               )}
             </Card>
           </Col>
         </Row>
 
-        {twitter && session?.google ? (
+        {twitter &&
+        twitterError === undefined &&
+        google &&
+        googleError === undefined ? (
           <>
             {downCaret}
             <Section user={twitter} />

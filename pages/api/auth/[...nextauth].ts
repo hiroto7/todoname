@@ -1,4 +1,4 @@
-import { NextApiHandler } from "next";
+import type { NextApiHandler } from "next";
 import NextAuth from "next-auth";
 import { getToken } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
@@ -50,8 +50,7 @@ const auth: NextApiHandler<unknown> = async (req, res) => {
             case "google": {
               nextToken.google = {
                 ...nextToken,
-                id: user.id,
-                accessToken: account.access_token,
+                accessToken: account.access_token!,
               };
               nextToken.twitter = token?.twitter;
               break;
@@ -59,13 +58,6 @@ const auth: NextApiHandler<unknown> = async (req, res) => {
           }
         }
         return nextToken;
-      },
-      session({ session, token }) {
-        session.google = token.google && {
-          ...token.google,
-          image: token.google.picture,
-        };
-        return session;
       },
     },
   });

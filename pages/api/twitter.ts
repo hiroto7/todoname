@@ -31,7 +31,7 @@ const handler: NextApiHandler<User> = async (req, res) => {
       if (error instanceof ApiResponseError && error.code === 401) {
         res.status(401).end();
       } else {
-        console.error(error);
+        console.log(error);
         res.status(500).end();
       }
     }

@@ -8,20 +8,6 @@ declare module "next-auth/jwt" {
     twitter:
       | (DefaultJWT & { accessToken: string; accessSecret: string })
       | undefined;
-    google:
-      | (DefaultJWT & {
-          id: string;
-          accessToken: string | undefined;
-        })
-      | undefined;
-  }
-}
-
-declare module "next-auth" {
-  /**
-   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
-   */
-  interface Session extends DefaultSession {
-    google?: DefaultSession["user"] & { id: string };
+    google: (DefaultJWT & { accessToken: string }) | undefined;
   }
 }
