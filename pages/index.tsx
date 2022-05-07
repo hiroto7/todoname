@@ -296,8 +296,8 @@ const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
     fetcher
   );
 
-  const [normalName, setNormalName] = useState("");
-  const [beginningText, setBeginningText] = useState("");
+  const [normalName, setNormalName] = useState(user.name);
+  const [beginningText, setBeginningText] = useState(`${user.name}@`);
   const [separator, setSeparator] = useState("、");
   const [endText, setEndText] = useState("");
 
