@@ -87,26 +87,26 @@ const ProfileSummary: React.FC<{
   </>
 );
 
-const TwitterProfileSummary: React.FC<
-  Omit<TwitterUser, "name"> & { name: ReactNode }
-> = ({
-  name,
-  profile_image_url: profileImageUrl,
-  username,
-  protected: isProtected,
-}) => (
+const TwitterProfileName: React.FC<{
+  name: ReactNode;
+  isProtected: boolean;
+}> = ({ name, isProtected }) =>
+  isProtected ? (
+    <>
+      {name} <i className="bi bi-lock-fill" />
+    </>
+  ) : (
+    <>{name}</>
+  );
+
+const TwitterProfileSummary: React.FC<{
+  user: Omit<TwitterUser, "name">;
+  name: ReactNode;
+}> = ({ user, name }) => (
   <ProfileSummary
-    name={
-      isProtected ? (
-        <>
-          {name} <i className="bi bi-lock-fill" />
-        </>
-      ) : (
-        name
-      )
-    }
-    id={`@${username}`}
-    image={profileImageUrl}
+    name={<TwitterProfileName name={name} isProtected={user.protected} />}
+    id={`@${user.username}`}
+    image={user.profile_image_url}
   />
 );
 
@@ -154,12 +154,12 @@ const NameSample: React.FC<{
 const Sample0: React.FC<{
   name: string;
   user: TwitterUser;
-}> = ({ name: name, user }) => (
+}> = ({ name, user }) => (
   <Card>
     <Card.Header>サンプル</Card.Header>
     <Card.Body>
       <TwitterProfileSummary
-        {...user}
+        user={user}
         name={name || <i className="text-danger">名前を入力してください</i>}
       />
     </Card.Body>
@@ -195,15 +195,19 @@ const Sample1: React.FC<{
         </Row>
       </Card.Header>
       <Card.Body>
-        <TwitterProfileSummary
-          {...user}
+        <ProfileSummary
           name={
             apparentTasks ? (
-              <NameSample
-                tasks={apparentTasks}
-                beginningText={beginningText}
-                separator={separator}
-                endText={endText}
+              <TwitterProfileName
+                name={
+                  <NameSample
+                    tasks={apparentTasks}
+                    beginningText={beginningText}
+                    separator={separator}
+                    endText={endText}
+                  />
+                }
+                isProtected={user.protected}
               />
             ) : (
               <Placeholder as="div" animation="glow">
@@ -211,6 +215,8 @@ const Sample1: React.FC<{
               </Placeholder>
             )
           }
+          id={`@${user.username}`}
+          image={user.profile_image_url}
         />
       </Card.Body>
     </Card>
@@ -578,7 +584,7 @@ const Home: NextPage = () => {
                     {loggedInLabel}
                   </Card.Text>
 
-                  <TwitterProfileSummary {...twitter} />
+                  <TwitterProfileSummary user={twitter} name={twitter.name} />
                 </>
               ) : (
                 <SignInButton provider="twitter" loading={loading} />
