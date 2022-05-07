@@ -6,12 +6,7 @@ import type { DefaultJWT } from "next-auth/jwt";
 declare module "next-auth/jwt" {
   interface JWT {
     twitter:
-      | (DefaultJWT & {
-          id: string;
-          screenName: string;
-          accessToken: string;
-          accessSecret: string;
-        })
+      | (DefaultJWT & { accessToken: string; accessSecret: string })
       | undefined;
     google:
       | (DefaultJWT & {
@@ -27,7 +22,6 @@ declare module "next-auth" {
    * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
    */
   interface Session extends DefaultSession {
-    twitter?: DefaultSession["user"] & { id: string; screenName: string };
     google?: DefaultSession["user"] & { id: string };
   }
 }

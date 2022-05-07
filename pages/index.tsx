@@ -587,7 +587,10 @@ const Home: NextPage = () => {
                   <TwitterProfileSummary user={twitter} name={twitter.name} />
                 </>
               ) : (
-                <SignInButton provider="twitter" loading={loading} />
+                <SignInButton
+                  provider="twitter"
+                  loading={!twitter && error === undefined}
+                />
               )}
             </Card>
           </Col>

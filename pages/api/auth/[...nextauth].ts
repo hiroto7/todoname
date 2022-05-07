@@ -2,9 +2,7 @@ import { NextApiHandler } from "next";
 import NextAuth from "next-auth";
 import { getToken } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
-import TwitterProvider, {
-  type TwitterLegacyProfile,
-} from "next-auth/providers/twitter";
+import TwitterProvider from "next-auth/providers/twitter";
 
 const secret = process.env.NEXTAUTH_SECRET;
 
@@ -37,17 +35,14 @@ const auth: NextApiHandler<unknown> = async (req, res) => {
       colorScheme: "light",
     },
     callbacks: {
-      async jwt({ token: nextToken, user, account, profile }) {
-        if (account && user && profile) {
+      jwt({ token: nextToken, user, account }) {
+        if (account && user) {
           switch (account.provider) {
             case "twitter": {
               nextToken.twitter = {
                 ...nextToken,
-                id: user.id,
-                screenName: (profile as unknown as TwitterLegacyProfile)
-                  .screen_name,
-                accessToken: account.oauth_token as string,
-                accessSecret: account.oauth_token_secret as string,
+                accessToken: account["oauth_token"] as string,
+                accessSecret: account["oauth_token_secret"] as string,
               };
               nextToken.google = token?.google;
               break;
@@ -65,11 +60,7 @@ const auth: NextApiHandler<unknown> = async (req, res) => {
         }
         return nextToken;
       },
-      async session({ session, token }) {
-        session.twitter = token.twitter && {
-          ...token.twitter,
-          image: token.twitter.picture,
-        };
+      session({ session, token }) {
         session.google = token.google && {
           ...token.google,
           image: token.google.picture,
