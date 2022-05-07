@@ -153,9 +153,8 @@ const Sample1: React.FC<{
   image: string;
 }> = ({ tasks, beginningText, separator, endText, screenName, image }) => {
   const [showDummies, setShowDummies] = useState(false);
-  const showDummies1 = showDummies || (tasks && tasks.length === 0);
-
-  const tasks1 = showDummies1 ? dummyTasks : tasks;
+  const apparentlyShowDummies = showDummies || (tasks && tasks.length === 0);
+  const apparentTasks = apparentlyShowDummies ? dummyTasks : tasks;
 
   return (
     <Card>
@@ -166,8 +165,8 @@ const Sample1: React.FC<{
             <Form.Check
               id="check1"
               type="checkbox"
-              checked={showDummies1}
-              disabled={showDummies && (!tasks || tasks.length === 0)}
+              checked={apparentlyShowDummies}
+              disabled={apparentlyShowDummies && (!tasks || tasks.length === 0)}
               onChange={() => setShowDummies(!showDummies)}
               label="ダミーで表示"
             />
@@ -178,9 +177,9 @@ const Sample1: React.FC<{
         <ProfileSummary
           id={`@${screenName}`}
           name={
-            tasks1 ? (
+            apparentTasks ? (
               <NameSample
-                tasks={tasks1}
+                tasks={apparentTasks}
                 beginningText={beginningText}
                 separator={separator}
                 endText={endText}
