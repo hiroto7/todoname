@@ -184,8 +184,8 @@ const Sample1: React.FC<{
           <Col xs="auto">サンプル</Col>
           <Col xs="auto">
             <Form.Check
-              id="check1"
-              type="checkbox"
+              id="showDummiesCheck"
+              type="switch"
               checked={apparentlyShowDummies}
               disabled={apparentlyShowDummies && (!tasks || tasks.length === 0)}
               onChange={() => setShowDummies(!showDummies)}
@@ -405,7 +405,8 @@ const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
               )
             ) : (
               <Placeholder as={Card.Text} animation="glow">
-                <Placeholder xs={6} />
+                <Placeholder xs={2} /> <Placeholder xs={3} />{" "}
+                <Placeholder xs={2} />
               </Placeholder>
             )}
           </Card>
