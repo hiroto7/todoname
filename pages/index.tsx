@@ -23,6 +23,7 @@ import {
   Tooltip,
 } from "react-bootstrap";
 import useSWR from "swr";
+import type { UserV2 } from "twitter-api-v2";
 
 const NameSampleComponent: React.FC<{
   color: string;
@@ -86,6 +87,29 @@ const ProfileSummary: React.FC<{
   </>
 );
 
+const TwitterProfileSummary: React.FC<
+  Omit<TwitterUser, "name"> & { name: ReactNode }
+> = ({
+  name,
+  profile_image_url: profileImageUrl,
+  username,
+  protected: isProtected,
+}) => (
+  <ProfileSummary
+    name={
+      isProtected ? (
+        <>
+          {name} <i className="bi bi-lock-fill" />
+        </>
+      ) : (
+        name
+      )
+    }
+    id={`@${username}`}
+    image={profileImageUrl}
+  />
+);
+
 const beginningTextTitle = "先頭テキスト";
 const separatorTitle = "セパレーター";
 const endTextTitle = "末尾テキスト";
@@ -128,17 +152,15 @@ const NameSample: React.FC<{
 );
 
 const Sample0: React.FC<{
-  screenName: string;
-  normalName: string;
-  image: string;
-}> = ({ screenName, normalName, image }) => (
+  name: string;
+  user: TwitterUser;
+}> = ({ name: name, user }) => (
   <Card>
     <Card.Header>サンプル</Card.Header>
     <Card.Body>
-      <ProfileSummary
-        id={`@${screenName}`}
-        name={normalName || <i>名前を入力してください</i>}
-        image={image}
+      <TwitterProfileSummary
+        {...user}
+        name={name || <i className="text-danger">名前を入力してください</i>}
       />
     </Card.Body>
   </Card>
@@ -149,11 +171,10 @@ const Sample1: React.FC<{
   beginningText: string;
   separator: string;
   endText: string;
-  screenName: string;
-  image: string;
-}> = ({ tasks, beginningText, separator, endText, screenName, image }) => {
+  user: TwitterUser;
+}> = ({ tasks, beginningText, separator, endText, user }) => {
   const [showDummies, setShowDummies] = useState(false);
-  const apparentlyShowDummies = showDummies || (tasks && tasks.length === 0);
+  const apparentlyShowDummies = (tasks && tasks.length === 0) || showDummies;
   const apparentTasks = apparentlyShowDummies ? dummyTasks : tasks;
 
   return (
@@ -174,8 +195,8 @@ const Sample1: React.FC<{
         </Row>
       </Card.Header>
       <Card.Body>
-        <ProfileSummary
-          id={`@${screenName}`}
+        <TwitterProfileSummary
+          {...user}
           name={
             apparentTasks ? (
               <NameSample
@@ -190,7 +211,6 @@ const Sample1: React.FC<{
               </Placeholder>
             )
           }
-          image={image}
         />
       </Card.Body>
     </Card>
@@ -256,10 +276,7 @@ const NameComponentInput: React.FC<{
   );
 };
 
-const Section: React.FC<{
-  screenName: string;
-  image: string;
-}> = ({ screenName, image }) => {
+const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
   const {
     data: tasklists,
     error: tasklistsError,
@@ -434,13 +451,11 @@ const Section: React.FC<{
               </Col>
               <Col>
                 <Sample1
+                  user={user}
                   tasks={tasks}
                   beginningText={beginningText}
                   separator={separator}
                   endText={endText}
-                  screenName={screenName}
-                  image={image}
-                  key={2}
                 />
               </Col>
             </Row>
@@ -459,11 +474,7 @@ const Section: React.FC<{
                 />
               </Col>
               <Col>
-                <Sample0
-                  normalName={normalName}
-                  screenName={screenName}
-                  image={image}
-                />
+                <Sample0 user={user} name={normalName} />
               </Col>
             </Row>
           </Card>
@@ -499,9 +510,19 @@ const downCaret = (
   </div>
 );
 
+type TwitterUser = Required<
+  Pick<UserV2, "id" | "name" | "username" | "profile_image_url" | "protected">
+>;
+
 const Home: NextPage = () => {
   const { data: session, status } = useSession();
   const loading = status === "loading";
+
+  const {
+    data: twitter,
+    error,
+    mutate,
+  } = useSWR<TwitterUser>("/api/twitter", fetcher);
 
   return (
     <>
@@ -551,17 +572,13 @@ const Home: NextPage = () => {
               <Card.Text className="text-muted">
                 ログインしたアカウントのプロフィールの名前が書き換えられます。
               </Card.Text>
-              {session?.twitter ? (
+              {twitter ? (
                 <>
                   <Card.Text className="text-success text-center">
                     {loggedInLabel}
                   </Card.Text>
 
-                  <ProfileSummary
-                    id={`@${session.twitter.screenName}`}
-                    name={session.twitter.name}
-                    image={session.twitter.image!}
-                  />
+                  <TwitterProfileSummary {...twitter} />
                 </>
               ) : (
                 <SignInButton provider="twitter" loading={loading} />
@@ -595,13 +612,10 @@ const Home: NextPage = () => {
           </Col>
         </Row>
 
-        {session?.twitter && session.google ? (
+        {twitter && session?.google ? (
           <>
             {downCaret}
-            <Section
-              screenName={session.twitter.screenName}
-              image={session.twitter.image!}
-            />
+            <Section user={twitter} />
           </>
         ) : (
           <div className="text-muted">
