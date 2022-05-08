@@ -3,7 +3,7 @@ import type { oauth2_v2, tasks_v1 } from "googleapis";
 import type { NextPage } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
-import React, { ReactNode, useState } from "react";
+import React, { useEffect, useState, type ReactNode } from "react";
 import {
   Badge,
   Button,
@@ -282,30 +282,133 @@ const NameComponentInput: React.FC<{
   );
 };
 
-const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
-  const {
-    data: tasklists,
-    error: tasklistsError,
-    mutate: tasklistsMutate,
-  } = useSWR<readonly tasks_v1.Schema$TaskList[]>("/api/tasklists", fetcher);
+const useTasks = (tasklist: string | null | undefined) => {
+  const { data } = useSWR<readonly tasks_v1.Schema$Task[]>(
+    tasklist && `/api/tasklists/${tasklist}/tasks`,
+    fetcher
+  );
+  return data;
+};
 
-  const [tasklistId0, setTasklistId] = useState<string>();
-  const tasklistId = tasklistId0 ?? tasklists?.[0]?.id;
-  const tasklist = tasklists?.find((tasklist) => tasklist.id === tasklistId);
-
-  const {
-    data: tasks,
-    error: taskError,
-    mutate: taskMutate,
-  } = useSWR<readonly tasks_v1.Schema$Task[]>(
-    tasklistId && `/api/tasklists/${tasklistId}/tasks`,
+const TasklistPicker: React.FC<{
+  tasklist: string | undefined;
+  onChange: (tasklist: string) => void;
+}> = ({ tasklist: tasklistId, onChange }) => {
+  const { data: tasklists } = useSWR<readonly tasks_v1.Schema$TaskList[]>(
+    "/api/tasklists",
     fetcher
   );
 
+  const defaultTasklist = tasklists?.[0];
+  const tasklist = tasklists?.find((tasklist) => tasklist.id === tasklistId);
+
+  useEffect(() => {
+    if (!tasklist && defaultTasklist) {
+      onChange(defaultTasklist.id!);
+    }
+  }, [defaultTasklist, onChange, tasklist]);
+
+  const tasks = useTasks(tasklist?.id);
+
+  return (
+    <Card body>
+      <Row>
+        {tasklist ? (
+          <Col>
+            <Card.Title>
+              <i className="bi bi-list-task" /> {tasklist.title}
+            </Card.Title>
+            <Card.Text>
+              <small className="text-muted">
+                {new Date(tasklist.updated!).toLocaleString(undefined, {
+                  dateStyle: "short",
+                  timeStyle: "short",
+                })}
+              </small>
+            </Card.Text>
+          </Col>
+        ) : (
+          <Col xs={9} xl={10}>
+            <Placeholder as={Card.Title} animation="glow">
+              <Placeholder xs={6} />
+            </Placeholder>
+            <Placeholder as={Card.Text} animation="glow">
+              <Placeholder xs={4} size="sm" />
+            </Placeholder>
+          </Col>
+        )}
+        {tasklists ? (
+          <Col xs="auto">
+            <DropdownButton
+              id="tasklist-dropdown-button"
+              title="変更"
+              variant="secondary"
+            >
+              {tasklists.map((tasklist) => (
+                <Dropdown.Item
+                  key={tasklist.id}
+                  onClick={() => onChange(tasklist.id!)}
+                  active={tasklist.id === tasklistId}
+                >
+                  <div>{tasklist.title}</div>
+                  <div>
+                    <small>
+                      {new Date(tasklist.updated!).toLocaleString(undefined, {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
+                    </small>
+                  </div>
+                </Dropdown.Item>
+              ))}
+            </DropdownButton>
+          </Col>
+        ) : (
+          <Col xs={3} xl={2}>
+            <Placeholder.Button
+              variant="secondary"
+              xs={12}
+            ></Placeholder.Button>
+          </Col>
+        )}
+      </Row>
+      {tasks ? (
+        tasks.length > 0 ? (
+          <div>
+            {tasks
+              .map((task) => (
+                <Badge pill bg="dark" key={task.id}>
+                  {task.title}
+                </Badge>
+              ))
+              .reduce((previousValue, currentValue) => (
+                <>
+                  {previousValue} {currentValue}
+                </>
+              ))}
+          </div>
+        ) : (
+          <Card.Text>
+            <i>未完了のタスクはありません</i>
+          </Card.Text>
+        )
+      ) : (
+        <Placeholder as={Card.Text} animation="glow">
+          <Placeholder xs={2} /> <Placeholder xs={3} /> <Placeholder xs={2} />
+        </Placeholder>
+      )}
+    </Card>
+  );
+};
+
+const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
+  const [tasklist, setTasklist] = useState<string>();
   const [normalName, setNormalName] = useState(user.name);
   const [beginningText, setBeginningText] = useState(`${user.name}@`);
   const [separator, setSeparator] = useState("、");
   const [endText, setEndText] = useState("");
+
+  const tasks = useTasks(tasklist);
 
   return (
     <>
@@ -320,96 +423,7 @@ const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
 
       <Row className="justify-content-center">
         <Col sm={10} md={8} lg={6}>
-          <Card body>
-            <Row>
-              {tasklist ? (
-                <Col>
-                  <Card.Title>
-                    <i className="bi bi-list-task" /> {tasklist.title}
-                  </Card.Title>
-                  <Card.Text>
-                    <small className="text-muted">
-                      {new Date(tasklist.updated!).toLocaleString(undefined, {
-                        dateStyle: "short",
-                        timeStyle: "short",
-                      })}
-                    </small>
-                  </Card.Text>
-                </Col>
-              ) : (
-                <Col xs={9} xl={10}>
-                  <Placeholder as={Card.Title} animation="glow">
-                    <Placeholder xs={6} />
-                  </Placeholder>
-                  <Placeholder as={Card.Text} animation="glow">
-                    <Placeholder xs={4} size="sm" />
-                  </Placeholder>
-                </Col>
-              )}
-              {tasklists ? (
-                <Col xs="auto">
-                  <DropdownButton
-                    id="tasklist-dropdown-button"
-                    title="変更"
-                    variant="secondary"
-                  >
-                    {tasklists.map((tasklist) => (
-                      <Dropdown.Item
-                        key={tasklist.id}
-                        onClick={() => setTasklistId(tasklist.id!)}
-                      >
-                        <div>{tasklist.title}</div>
-                        <div>
-                          <small>
-                            {new Date(tasklist.updated!).toLocaleString(
-                              undefined,
-                              {
-                                dateStyle: "short",
-                                timeStyle: "short",
-                              }
-                            )}
-                          </small>
-                        </div>
-                      </Dropdown.Item>
-                    ))}
-                  </DropdownButton>
-                </Col>
-              ) : (
-                <Col xs={3} xl={2}>
-                  <Placeholder.Button
-                    variant="secondary"
-                    xs={12}
-                  ></Placeholder.Button>
-                </Col>
-              )}
-            </Row>
-            {tasks ? (
-              tasks.length > 0 ? (
-                <div>
-                  {tasks
-                    .map((task) => (
-                      <Badge pill bg="dark" key={task.id}>
-                        {task.title}
-                      </Badge>
-                    ))
-                    .reduce((previousValue, currentValue) => (
-                      <>
-                        {previousValue} {currentValue}
-                      </>
-                    ))}
-                </div>
-              ) : (
-                <Card.Text>
-                  <i>未完了のタスクはありません</i>
-                </Card.Text>
-              )
-            ) : (
-              <Placeholder as={Card.Text} animation="glow">
-                <Placeholder xs={2} /> <Placeholder xs={3} />{" "}
-                <Placeholder xs={2} />
-              </Placeholder>
-            )}
-          </Card>
+          <TasklistPicker tasklist={tasklist} onChange={setTasklist} />
         </Col>
       </Row>
 
@@ -490,23 +504,24 @@ const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
 
       {downCaret}
 
-      <div className="d-grid mb-3">
-        <Button
-          size="lg"
-          disabled={tasklistId === undefined || normalName.length === 0}
-          onClick={() =>
-            axios.post("/api/update", {
-              tasklist: tasklistId,
-              normalName,
-              beginningText,
-              separator,
-              endText,
-            })
-          }
-        >
-          名前を書き換える
-        </Button>
-      </div>
+      <Button
+        size="lg"
+        className="w-100 mb-3"
+        {...(tasklist === undefined || normalName.length === 0
+          ? { disabled: true }
+          : {
+              onClick: () =>
+                axios.post("/api/update", {
+                  tasklist,
+                  normalName,
+                  beginningText,
+                  separator,
+                  endText,
+                }),
+            })}
+      >
+        名前を書き換える
+      </Button>
     </>
   );
 };
