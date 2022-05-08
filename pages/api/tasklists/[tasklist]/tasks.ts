@@ -25,8 +25,15 @@ const handler: NextApiHandler<tasks_v1.Schema$Task[]> = async (req, res) => {
 
     const tasks = (await service.tasks.list({ tasklist: tasklist as string }))
       .data.items;
+
     assert(tasks !== undefined);
-    res.status(200).json(tasks);
+    const sorted = tasks.sort((a, b) => {
+      assert(typeof a.position === "string");
+      assert(typeof b.position === "string");
+      return a.position.localeCompare(b.position);
+    });
+
+    res.status(200).json(sorted);
   } else {
     res.status(401).end();
   }

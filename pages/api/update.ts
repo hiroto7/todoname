@@ -42,7 +42,12 @@ const handler: NextApiHandler<void> = async (req, res) => {
       assert(tasks !== undefined);
 
       if (tasks.length > 0) {
-        const taskNames = tasks.map(({ title }) => title);
+        const sorted = tasks.sort((a, b) => {
+          assert(typeof a.position === "string");
+          assert(typeof b.position === "string");
+          return a.position.localeCompare(b.position);
+        });
+        const taskNames = sorted.map(({ title }) => title);
 
         await twitterClient.v1.updateAccountProfile({
           name: `${beginningText}${taskNames.join(separator)}${endText}`,
