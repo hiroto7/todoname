@@ -38,4 +38,26 @@ export default NextAuth({
       return session;
     },
   },
+  events: {
+    async signIn({ account }) {
+      await prisma.account.update({
+        where: {
+          provider_providerAccountId: {
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+          },
+        },
+        data: account,
+      });
+    },
+    async linkAccount({ user, account }) {
+      await prisma.account.deleteMany({
+        where: {
+          userId: user.id,
+          provider: account.provider,
+          providerAccountId: { not: account.providerAccountId },
+        },
+      });
+    },
+  },
 });
