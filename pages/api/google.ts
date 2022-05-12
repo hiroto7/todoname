@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { GaxiosError } from "gaxios";
 import { google, type oauth2_v2 } from "googleapis";
+import { GaxiosError } from "googleapis-common";
 import type { NextApiHandler } from "next";
 import { getSession } from "next-auth/react";
 
@@ -46,7 +46,10 @@ const handler: NextApiHandler<oauth2_v2.Schema$Userinfo> = async (req, res) => {
           res.status(403).end();
         }
       } catch (error) {
-        if (error instanceof GaxiosError && error.response?.status === 401) {
+        if (
+          error instanceof GaxiosError &&
+          (error.response?.status === 400 || error.response?.status === 401)
+        ) {
           res.status(401).end();
         } else {
           console.error(error);
