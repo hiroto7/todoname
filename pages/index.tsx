@@ -546,8 +546,32 @@ type TwitterUser = Required<
   Pick<UserV2, "id" | "name" | "username" | "profile_image_url" | "protected">
 >;
 
+const SignInErrorAlert: React.FC<{ error: string }> = ({ error }) => (
+  <Alert variant="danger">
+    {error === "OAuthAccountNotLinked" ? (
+      <>
+        <p>
+          アカウントのリンクに失敗しました。以前ログインしたことのあるアカウントを、現在ログイン済みのアカウントにリンクすることはできません。
+        </p>
+        <p>
+          一方のアカウントで「リンクを解除」または「データを削除」を行うことで、リンクできるようになります。
+        </p>
+      </>
+    ) : (
+      <p>ログインに失敗しました。</p>
+    )}
+
+    <p className="mb-0">
+      <small>{error}</small>
+    </p>
+  </Alert>
+);
+
 const Home: NextPage = () => {
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { error } = router.query;
+
+  assert(!(error instanceof Array));
 
   const {
     data: twitter,
@@ -613,6 +637,7 @@ const Home: NextPage = () => {
           まず、TwitterアカウントとGoogleアカウントの<strong>両方に</strong>
           ログインします。
         </p>
+      {error && <SignInErrorAlert error={error} />}
 
         <Row xs={1} md={2} className="g-4 justify-content-center">
           <Col sm={10} lg={5} xl={4}>
