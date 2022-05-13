@@ -1,6 +1,6 @@
 import assert from "assert";
 import axios from "axios";
-import type { oauth2_v2, tasks_v1 } from "googleapis";
+import type { oauth2_v2 } from "googleapis";
 import type { NextPage } from "next";
 import { signIn } from "next-auth/react";
 import Head from "next/head";
@@ -12,171 +12,23 @@ import {
   Card,
   Col,
   Form,
-  OverlayTrigger,
   Placeholder,
   Row,
-  Tooltip,
 } from "react-bootstrap";
 import useSWR from "swr";
 import type { UserV2 } from "twitter-api-v2";
 import Layout from "../components/Layout";
+import {
+  ProfileSampleCard0,
+  ProfileSampleCard1,
+} from "../components/ProfileSampleCards";
 import ProfileSummary, {
-  TwitterProfileName,
   TwitterProfileSummary,
 } from "../components/ProfileSummary";
 import TasklistPicker from "../components/TasklistPicker";
 import WithDatalist from "../components/WithDatalist";
 import useTasks from "../hooks/useTasks";
-
-const NameSampleComponent: React.FC<{
-  color: string;
-  title: string;
-  text: string;
-}> = ({ color, title, text }) => (
-  <OverlayTrigger
-    overlay={
-      <Tooltip id="tooltip1">{text ? title : `${title}はありません`}</Tooltip>
-    }
-  >
-    {text ? (
-      <span
-        style={{
-          outlineColor: `var(--bs-${color})`,
-          outlineWidth: 1,
-          outlineStyle: "solid",
-        }}
-      >
-        {text}
-      </span>
-    ) : (
-      <i
-        className="bi bi-cursor-text position-relative"
-        style={{
-          color: `var(--bs-${color})`,
-          marginLeft: "-0.5em",
-          marginRight: "-0.5em",
-        }}
-      />
-    )}
-  </OverlayTrigger>
-);
-
-const dummyTasks = ["タスクその1", "タスクその2", "タスクその3"].map(
-  (title, id) => ({ id, title })
-);
-
-const beginningTextTitle = "先頭テキスト";
-const separatorTitle = "セパレーター";
-const endTextTitle = "末尾テキスト";
-
-const beginningTextColor = "green";
-const separatorColor = "purple";
-const endTextColor = "orange";
-
-const NameSample: React.FC<{
-  tasks: readonly ({ id: number; title: string } | tasks_v1.Schema$Task)[];
-  beginningText: string;
-  separator: string;
-  endText: string;
-}> = ({ tasks, beginningText, separator, endText }) => (
-  <>
-    <NameSampleComponent
-      color={beginningTextColor}
-      title={beginningTextTitle}
-      text={beginningText}
-    />
-    {tasks
-      .map((task) => <span key={task.id}>{task.title}</span>)
-      .reduce((previousValue, currentValue) => (
-        <>
-          {previousValue}
-          <NameSampleComponent
-            color={separatorColor}
-            title={separatorTitle}
-            text={separator}
-          />
-          {currentValue}
-        </>
-      ))}
-    <NameSampleComponent
-      color={endTextColor}
-      title={endTextTitle}
-      text={endText}
-    />
-  </>
-);
-
-const Sample0: React.FC<{
-  name: string;
-  user: TwitterUser;
-}> = ({ name, user }) => (
-  <Card>
-    <Card.Header>サンプル</Card.Header>
-    <Card.Body>
-      <TwitterProfileSummary
-        user={user}
-        name={name || <i className="text-danger">名前を入力してください</i>}
-      />
-    </Card.Body>
-  </Card>
-);
-
-const Sample1: React.FC<{
-  tasks: readonly tasks_v1.Schema$Task[] | undefined;
-  beginningText: string;
-  separator: string;
-  endText: string;
-  user: TwitterUser;
-}> = ({ tasks, beginningText, separator, endText, user }) => {
-  const [showDummies, setShowDummies] = useState(false);
-  const apparentlyShowDummies = (tasks && tasks.length === 0) || showDummies;
-  const apparentTasks = apparentlyShowDummies ? dummyTasks : tasks;
-
-  return (
-    <Card>
-      <Card.Header>
-        <Row className="justify-content-between">
-          <Col xs="auto">サンプル</Col>
-          <Col xs="auto">
-            <Form.Check
-              id="showDummiesCheck"
-              type="switch"
-              checked={apparentlyShowDummies}
-              disabled={apparentlyShowDummies && (!tasks || tasks.length === 0)}
-              onChange={() => setShowDummies(!showDummies)}
-              label="ダミーで表示"
-            />
-          </Col>
-        </Row>
-      </Card.Header>
-      <Card.Body>
-        <ProfileSummary
-          name={
-            apparentTasks ? (
-              <TwitterProfileName
-                name={
-                  <NameSample
-                    tasks={apparentTasks}
-                    beginningText={beginningText}
-                    separator={separator}
-                    endText={endText}
-                  />
-                }
-                isProtected={user.protected}
-              />
-            ) : (
-              <Placeholder as="div" animation="glow">
-                <Placeholder xs={6} />
-              </Placeholder>
-            )
-          }
-          id={`@${user.username}`}
-          image={user.profile_image_url}
-        />
-      </Card.Body>
-    </Card>
-  );
-};
+import { BEGINNING_TEXT, END_TEXT, SEPARATOR } from "../lib/constants";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -219,7 +71,7 @@ const NameComponentInput: React.FC<{
   <Form.Group as={Row} xs={2}>
     <Form.Label column>{title}</Form.Label>
     <Col>
-      <WithDatalist name={name} options={examples}>
+      <WithDatalist datalistId={`${name}Datalist`} options={examples}>
         {(datalistId) => (
           <Form.Control
             value={text}
@@ -285,36 +137,30 @@ const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
                 </Card.Text>
                 <fieldset className="d-grid gap-2">
                   <NameComponentInput
-                    name="beginningText"
-                    title={beginningTextTitle}
                     examples={(normalName.length > 0 && normalName !== user.name
                       ? [normalName, user.name]
                       : [user.name]
                     ).flatMap((name) => [`${name}@`, `${name}/`, `${name} `])}
                     text={beginningText}
-                    color={beginningTextColor}
                     onChange={setBeginningText}
+                    {...BEGINNING_TEXT}
                   />
                   <NameComponentInput
-                    name="separator"
-                    title={separatorTitle}
                     examples={[`、`, `/`]}
                     text={separator}
-                    color={separatorColor}
                     onChange={setSeparator}
+                    {...SEPARATOR}
                   />
                   <NameComponentInput
-                    name="endText"
-                    title={endTextTitle}
                     examples={[]}
                     text={endText}
-                    color={endTextColor}
                     onChange={setEndText}
+                    {...END_TEXT}
                   />
                 </fieldset>
               </Col>
               <Col>
-                <Sample1
+                <ProfileSampleCard1
                   user={user}
                   tasks={tasks}
                   beginningText={beginningText}
@@ -331,7 +177,10 @@ const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
                 <Card.Text>
                   未完了タスクがないとき、ここに入力したテキストがそのまま名前になります。
                 </Card.Text>
-                <WithDatalist name="normalName" options={[user.name]}>
+                <WithDatalist
+                  datalistId="normalNameDatalist"
+                  options={[user.name]}
+                >
                   {(datalistId) => (
                     <Form.Control
                       value={normalName}
@@ -342,7 +191,7 @@ const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
                 </WithDatalist>
               </Col>
               <Col>
-                <Sample0 user={user} name={normalName} />
+                <ProfileSampleCard0 user={user} name={normalName} />
               </Col>
             </Row>
           </Card>
