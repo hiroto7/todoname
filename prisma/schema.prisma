@@ -1,6 +1,6 @@
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider             = "mysql"
+  url                  = env("DATABASE_URL")
   referentialIntegrity = "prisma"
 }
 
@@ -15,15 +15,15 @@ model Account {
   type               String
   provider           String
   providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
   expires_at         Int?
   token_type         String?
   scope              String?
-  id_token           String?  @db.Text
+  id_token           String? @db.Text
   session_state      String?
-  oauth_token        String?  @db.Text
-  oauth_token_secret String?  @db.Text
+  oauth_token        String? @db.Text
+  oauth_token_secret String? @db.Text
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -46,6 +46,19 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  rule          Rule?
+}
+
+model Rule {
+  id            String  @id @default(cuid())
+  tasklist      String
+  beginningText String
+  separator     String
+  endText       String
+  normalName    String
+  enabled       Boolean
+  userId        String  @unique
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -55,5 +68,3 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
-
-

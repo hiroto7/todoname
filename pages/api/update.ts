@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 import assert from "assert";
 import { google } from "googleapis";
 import type { NextApiHandler } from "next";
-import { getToken } from "next-auth/jwt";
 import { getSession } from "next-auth/react";
 import { TwitterApi } from "twitter-api-v2";
 
@@ -66,6 +65,27 @@ const handler: NextApiHandler<void> = async (req, res) => {
             name: normalName,
           });
         }
+
+        await prisma.rule.upsert({
+          where: { userId: session.user.id },
+          create: {
+            enabled: true,
+            tasklist,
+            normalName,
+            beginningText,
+            separator,
+            endText,
+            userId: session.user.id,
+          },
+          update: {
+            enabled: true,
+            normalName,
+            beginningText,
+            separator,
+            endText,
+            tasklist,
+          },
+        });
 
         res.status(200).end();
       } else {
