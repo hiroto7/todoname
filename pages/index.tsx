@@ -210,32 +210,26 @@ const NameComponentInput: React.FC<{
   text: string;
   name: string;
   title: string;
-  examples?: readonly string[];
+  examples: readonly string[];
   onChange: (text: string) => void;
-}> = ({ color, title, text, name, examples, onChange }) => {
-  const datalistId = `${name}Datalist`;
-  return (
-    <Form.Group as={Row} xs={2}>
-      <Form.Label column>{title}</Form.Label>
-      <Col>
-        {examples && (
-          <datalist id={datalistId}>
-            {examples.map((example) => (
-              <option key={example} value={example} />
-            ))}
-          </datalist>
+}> = ({ color, title, text, name, examples, onChange }) => (
+  <Form.Group as={Row} xs={2}>
+    <Form.Label column>{title}</Form.Label>
+    <Col>
+      <WithDatalist name={name} options={examples}>
+        {(datalistId) => (
+          <Form.Control
+            value={text}
+            list={datalistId}
+            placeholder="なし"
+            style={{ borderColor: `var(--bs-${color})` }}
+            onChange={(event) => onChange(event.target.value)}
+          />
         )}
-        <Form.Control
-          value={text}
-          list={datalistId}
-          placeholder="なし"
-          style={{ borderColor: `var(--bs-${color})` }}
-          onChange={(event) => onChange(event.target.value)}
-        />
-      </Col>
-    </Form.Group>
-  );
-};
+      </WithDatalist>
+    </Col>
+  </Form.Group>
+);
 
 const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
   const [tasklist, setTasklist] = useState<string>();
@@ -290,11 +284,10 @@ const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
                   <NameComponentInput
                     name="beginningText"
                     title={beginningTextTitle}
-                    examples={[
-                      `${normalName}@`,
-                      `${normalName}/`,
-                      `${normalName} `,
-                    ]}
+                    examples={(normalName.length > 0 && normalName !== user.name
+                      ? [normalName, user.name]
+                      : [user.name]
+                    ).flatMap((name) => [`${name}@`, `${name}/`, `${name} `])}
                     text={beginningText}
                     color={beginningTextColor}
                     onChange={setBeginningText}
@@ -310,6 +303,7 @@ const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
                   <NameComponentInput
                     name="endText"
                     title={endTextTitle}
+                    examples={[]}
                     text={endText}
                     color={endTextColor}
                     onChange={setEndText}
@@ -334,11 +328,15 @@ const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
                 <Card.Text>
                   未完了タスクがないとき、ここに入力したテキストがそのまま名前になります。
                 </Card.Text>
-                <Form.Control
-                  value={normalName}
-                  placeholder="なし"
-                  onChange={(event) => setNormalName(event.target.value)}
-                />
+                <WithDatalist name="normalName" options={[user.name]}>
+                  {(datalistId) => (
+                    <Form.Control
+                      value={normalName}
+                      list={datalistId}
+                      onChange={(event) => setNormalName(event.target.value)}
+                    />
+                  )}
+                </WithDatalist>
               </Col>
               <Col>
                 <Sample0 user={user} name={normalName} />
