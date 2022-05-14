@@ -10,30 +10,12 @@ import {
   Tooltip,
 } from "react-bootstrap";
 import type { UserV2 } from "twitter-api-v2";
-import { BEGINNING_TEXT, END_TEXT, SEPARATOR } from "../lib/constants";
-import ProfileSummary, {
-  TwitterProfileName,
-  TwitterProfileSummary,
-} from "./ProfileSummary";
+import { BEGINNING_TEXT, END_TEXT, SEPARATOR } from "../../lib/constants";
+import ProfileSummary, { TwitterProfileName } from "../ProfileSummary";
 
 type TwitterUser = Required<
   Pick<UserV2, "id" | "name" | "username" | "profile_image_url" | "protected">
 >;
-
-export const ProfileSampleCard0: React.FC<{
-  name: string;
-  user: TwitterUser;
-}> = ({ name, user }) => (
-  <Card>
-    <Card.Header>サンプル</Card.Header>
-    <Card.Body>
-      <TwitterProfileSummary
-        user={user}
-        name={name || <i className="text-danger">名前を入力してください</i>}
-      />
-    </Card.Body>
-  </Card>
-);
 
 const NameSampleComponent: React.FC<{
   color: string;
@@ -97,7 +79,7 @@ const DUMMY_TASKS = ["タスクその1", "タスクその2", "タスクその3"]
   (title, id) => ({ id, title } as const)
 );
 
-export const ProfileSampleCard1: React.FC<{
+const ProfileSampleCard: React.FC<{
   tasks: readonly tasks_v1.Schema$Task[] | undefined;
   beginningText: string;
   separator: string;
@@ -153,3 +135,5 @@ export const ProfileSampleCard1: React.FC<{
     </Card>
   );
 };
+
+export default ProfileSampleCard;
