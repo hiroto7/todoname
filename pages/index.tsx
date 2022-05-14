@@ -1,10 +1,11 @@
-import axios from "axios";
+import type { Rule } from "@prisma/client";
+import axios, { AxiosError } from "axios";
 import type { oauth2_v2 } from "googleapis";
 import type { NextPage } from "next";
 import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Card, Col, Placeholder, Row } from "react-bootstrap";
 import useSWR from "swr";
 import type { UserV2 } from "twitter-api-v2";
@@ -15,8 +16,8 @@ import ProfileSummary, {
 import RuleCard0 from "../components/RuleCard0";
 import RuleCard1 from "../components/RuleCard1";
 import TasklistPicker from "../components/TasklistPicker";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import fetcher from "../lib/fetcher";
+import onErrorRetry from "../lib/onErrorRetry";
 
 const loggedInLabel = (
   <>
@@ -46,85 +47,6 @@ const SignInButton: React.FC<{ provider: string; loading: boolean }> = ({
   );
 };
 
-const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
-  const [tasklist, setTasklist] = useState<string>();
-  const [normalName, setNormalName] = useState(user.name);
-  const [beginningText, setBeginningText] = useState(`${user.name}@`);
-  const [separator, setSeparator] = useState("、");
-  const [endText, setEndText] = useState("");
-
-  return (
-    <>
-      <h2>To-Doリストを選択</h2>
-      <p className="mb-0">
-        ここで選択したTo-Doリストの内容から名前が生成されます。
-      </p>
-      <p>
-        <small className="text-warning">
-          <i className="bi bi-exclamation-triangle-fill" />{" "}
-          選択したリストの内容は誰でも見られる状態になるため、機密情報が含まれないことを確認してください。公開できるリストがない場合は、先に
-          <a
-            href="https://support.google.com/tasks/answer/7675771"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Google Tasksで新たなリストを作成
-          </a>
-          してください。
-        </small>
-      </p>
-
-      <Row className="justify-content-center">
-        <Col sm={10} md={8} lg={6}>
-          <TasklistPicker tasklist={tasklist} onChange={setTasklist} />
-        </Col>
-      </Row>
-
-      {downCaret}
-
-      <h2>名前の生成ルールを指定</h2>
-
-      <Row xs={1} className="g-4 justify-content-center">
-        <Col xs={12} lg={10} xl={9} className="d-grid gap-4">
-          <RuleCard1
-            user={user}
-            rule={{ tasklist, normalName, beginningText, separator, endText }}
-            onBeginningTextChange={setBeginningText}
-            onSeparatorChange={setSeparator}
-            onEndTextChange={setEndText}
-          />
-          <RuleCard0
-            user={user}
-            normalName={normalName}
-            onChange={setNormalName}
-          />
-        </Col>
-      </Row>
-
-      {downCaret}
-
-      <Button
-        size="lg"
-        className="w-100"
-        {...(tasklist === undefined || normalName.length === 0
-          ? { disabled: true }
-          : {
-              onClick: () =>
-                axios.post("/api/update", {
-                  tasklist,
-                  normalName,
-                  beginningText,
-                  separator,
-                  endText,
-                }),
-            })}
-      >
-        名前を書き換える
-      </Button>
-    </>
-  );
-};
-
 const downCaret = (
   <div className="text-center my-4">
     <i className="bi bi-caret-down-fill display-6" />
@@ -142,10 +64,28 @@ const Home: NextPage = () => {
     data: twitter,
     error: twitterError,
     mutate,
-  } = useSWR<TwitterUser>("/api/twitter", fetcher);
+  } = useSWR<TwitterUser>("/api/twitter", fetcher, { onErrorRetry });
 
   const { data: google, error: googleError } =
-    useSWR<oauth2_v2.Schema$Userinfo>("/api/google", fetcher);
+    useSWR<oauth2_v2.Schema$Userinfo>("/api/google", fetcher, { onErrorRetry });
+
+  const [rule, setRule] = useState<
+    Pick<Rule, "beginningText" | "separator" | "endText" | "normalName"> & {
+      tasklist: string | undefined;
+    }
+  >();
+
+  useEffect(() => {
+    if (!rule && twitter) {
+      setRule({
+        beginningText: `${twitter.name}@`,
+        separator: "、",
+        endText: "",
+        normalName: twitter.name,
+        tasklist: undefined,
+      });
+    }
+  }, [rule, twitter]);
 
   return (
     <Layout>
@@ -234,13 +174,83 @@ const Home: NextPage = () => {
         </Col>
       </Row>
 
-      {twitter &&
+      {rule &&
+      twitter &&
       twitterError === undefined &&
       google &&
       googleError === undefined ? (
         <>
           {downCaret}
-          <Section user={twitter} />
+
+          <section>
+            <h2>To-Doリストを選択</h2>
+            <p className="mb-0">
+              ここで選択したTo-Doリストの内容から名前が生成されます。
+            </p>
+            <p>
+              <small className="text-warning">
+                <i className="bi bi-exclamation-triangle-fill" />{" "}
+                選択したリストの内容は誰でも見られる状態になるため、機密情報が含まれないことを確認してください。公開できるリストがない場合は、先に
+                <a
+                  href="https://support.google.com/tasks/answer/7675771"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Google Tasksで新たなリストを作成
+                </a>
+                してください。
+              </small>
+            </p>
+
+            <Row className="justify-content-center">
+              <Col sm={10} md={8} lg={6}>
+                <TasklistPicker
+                  tasklist={rule.tasklist}
+                  onChange={(tasklist) => setRule({ ...rule, tasklist })}
+                />
+              </Col>
+            </Row>
+          </section>
+          {downCaret}
+
+          <section>
+            <h2>名前の生成ルールを指定</h2>
+
+            <Row xs={1} className="g-4 justify-content-center">
+              <Col xs={12} lg={10} xl={9} className="d-grid gap-4">
+                <RuleCard1
+                  user={twitter}
+                  rule={rule}
+                  onBeginningTextChange={(beginningText) =>
+                    setRule({ ...rule, beginningText })
+                  }
+                  onSeparatorChange={(separator) =>
+                    setRule({ ...rule, separator })
+                  }
+                  onEndTextChange={(endText) => setRule({ ...rule, endText })}
+                />
+                <RuleCard0
+                  user={twitter}
+                  normalName={rule.normalName}
+                  onChange={(normalName) => setRule({ ...rule, normalName })}
+                />
+              </Col>
+            </Row>
+          </section>
+
+          {downCaret}
+
+          <Button
+            size="lg"
+            className="w-100"
+            {...(rule.tasklist === undefined || rule.normalName.length === 0
+              ? { disabled: true }
+              : {
+                  onClick: () => axios.put("/api/update", rule),
+                })}
+          >
+            名前を書き換える
+          </Button>
         </>
       ) : (
         <div className="text-muted">

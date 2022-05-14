@@ -1,3 +1,4 @@
+import type { Rule } from "@prisma/client";
 import { Card, Col, Form, Row } from "react-bootstrap";
 import type { UserV2 } from "twitter-api-v2";
 import useTasks from "../../hooks/useTasks";
@@ -37,13 +38,10 @@ const NameComponentInput: React.FC<{
 
 const RuleCard1: React.FC<{
   user: TwitterUser;
-  rule: Readonly<{
-    tasklist: string | undefined;
-    normalName: string;
-    beginningText: string;
-    separator: string;
-    endText: string;
-  }>;
+  rule: { tasklist: string | undefined } & Pick<
+    Rule,
+    "normalName" | "beginningText" | "separator" | "endText"
+  >;
   onBeginningTextChange: (beginningText: string) => void;
   onSeparatorChange: (separator: string) => void;
   onEndTextChange: (endText: string) => void;

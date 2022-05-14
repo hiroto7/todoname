@@ -11,8 +11,8 @@ import {
 } from "react-bootstrap";
 import useSWR from "swr";
 import useTasks from "../hooks/useTasks";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import fetcher from "../lib/fetcher";
+import onErrorRetry from "../lib/onErrorRetry";
 
 const TasklistPicker: React.FC<{
   tasklist: string | undefined;
@@ -20,7 +20,8 @@ const TasklistPicker: React.FC<{
 }> = ({ tasklist: tasklistId, onChange }) => {
   const { data: tasklists } = useSWR<readonly tasks_v1.Schema$TaskList[]>(
     "/api/tasklists",
-    fetcher
+    fetcher,
+    { onErrorRetry }
   );
 
   const defaultTasklist = tasklists?.[0];
