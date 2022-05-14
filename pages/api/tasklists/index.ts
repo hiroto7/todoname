@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client";
 import assert from "assert";
 import { google, type tasks_v1 } from "googleapis";
 import type { NextApiHandler } from "next";
 import { getSession } from "next-auth/react";
-
-const prisma = new PrismaClient();
+import prisma from "../../../lib/prisma";
 
 const oAuth2Client = new google.auth.OAuth2({
   clientId: process.env.GOOGLE_ID,

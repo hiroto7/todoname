@@ -1,13 +1,11 @@
-import { PrismaClient } from "@prisma/client";
 import type { NextApiHandler } from "next";
 import { getSession } from "next-auth/react";
 import { ApiResponseError, TwitterApi, type UserV2 } from "twitter-api-v2";
+import prisma from "../../lib/prisma";
 
 type User = Required<
   Pick<UserV2, "id" | "name" | "username" | "profile_image_url" | "protected">
 >;
-
-const prisma = new PrismaClient();
 
 const handler: NextApiHandler<User> = async (req, res) => {
   const session = await getSession({ req });
