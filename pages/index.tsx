@@ -1,12 +1,12 @@
 import type { Rule } from "@prisma/client";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import type { oauth2_v2 } from "googleapis";
 import type { NextPage } from "next";
 import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { Button, Card, Col, Placeholder, Row } from "react-bootstrap";
+import { Button, Card, Col, Placeholder, Row, Spinner } from "react-bootstrap";
 import useSWR from "swr";
 import type { UserV2 } from "twitter-api-v2";
 import Layout from "../components/Layout";
@@ -56,6 +56,60 @@ const downCaret = (
 type TwitterUser = Required<
   Pick<UserV2, "id" | "name" | "username" | "profile_image_url" | "protected">
 >;
+
+const ApplyButton: React.FC<{
+  rule: Pick<Rule, "beginningText" | "separator" | "endText" | "normalName"> & {
+    tasklist: string | undefined;
+  };
+}> = ({ rule }) => {
+  const [status, setStatus] = useState<"sending" | "success" | "error">();
+
+  return (
+    <>
+      <Button
+        size="lg"
+        className="w-100"
+        disabled={
+          status === "sending" ||
+          rule.tasklist === undefined ||
+          rule.normalName.length === 0
+        }
+        onClick={
+          rule.tasklist === undefined || rule.normalName.length === 0
+            ? undefined
+            : async () => {
+                try {
+                  setStatus("sending");
+                  await axios.post("/api/update", rule);
+                  setStatus("success");
+                } catch (e) {
+                  setStatus("error");
+                }
+              }
+        }
+      >
+        {status === "sending" ? (
+          <Spinner animation="border" size="sm" />
+        ) : (
+          "名前を書き換える"
+        )}
+      </Button>
+      {status === "success" ? (
+        <p className="text-success text-center my-3">
+          <i className="bi bi-check-circle-fill" />{" "}
+          <strong>名前を更新しました</strong>
+        </p>
+      ) : status === "error" ? (
+        <p className="text-danger text-center my-3">
+          <i className="bi bi-x-octagon-fill" />{" "}
+          <strong>名前を更新できません</strong>
+        </p>
+      ) : (
+        <></>
+      )}
+    </>
+  );
+};
 
 const Home: NextPage = () => {
   const { data: session } = useSession();
@@ -240,17 +294,7 @@ const Home: NextPage = () => {
 
           {downCaret}
 
-          <Button
-            size="lg"
-            className="w-100"
-            {...(rule.tasklist === undefined || rule.normalName.length === 0
-              ? { disabled: true }
-              : {
-                  onClick: () => axios.put("/api/update", rule),
-                })}
-          >
-            名前を書き換える
-          </Button>
+          <ApplyButton rule={rule} />
         </>
       ) : (
         <div className="text-muted">
