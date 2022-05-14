@@ -5,28 +5,16 @@ import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Placeholder,
-  Row,
-} from "react-bootstrap";
+import { Button, Card, Col, Placeholder, Row } from "react-bootstrap";
 import useSWR from "swr";
 import type { UserV2 } from "twitter-api-v2";
 import Layout from "../components/Layout";
-import {
-  ProfileSampleCard0,
-  ProfileSampleCard1,
-} from "../components/ProfileSampleCards";
 import ProfileSummary, {
   TwitterProfileSummary,
 } from "../components/ProfileSummary";
+import RuleCard0 from "../components/RuleCard0";
+import RuleCard1 from "../components/RuleCard1";
 import TasklistPicker from "../components/TasklistPicker";
-import WithDatalist from "../components/WithDatalist";
-import useTasks from "../hooks/useTasks";
-import { BEGINNING_TEXT, END_TEXT, SEPARATOR } from "../lib/constants";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -58,40 +46,12 @@ const SignInButton: React.FC<{ provider: string; loading: boolean }> = ({
   );
 };
 
-const NameComponentInput: React.FC<{
-  color: string;
-  text: string;
-  name: string;
-  title: string;
-  examples: readonly string[];
-  onChange: (text: string) => void;
-}> = ({ color, title, text, name, examples, onChange }) => (
-  <Form.Group as={Row} xs={2}>
-    <Form.Label column>{title}</Form.Label>
-    <Col>
-      <WithDatalist datalistId={`${name}Datalist`} options={examples}>
-        {(datalistId) => (
-          <Form.Control
-            value={text}
-            list={datalistId}
-            placeholder="なし"
-            style={{ borderColor: `var(--bs-${color})` }}
-            onChange={(event) => onChange(event.target.value)}
-          />
-        )}
-      </WithDatalist>
-    </Col>
-  </Form.Group>
-);
-
 const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
   const [tasklist, setTasklist] = useState<string>();
   const [normalName, setNormalName] = useState(user.name);
   const [beginningText, setBeginningText] = useState(`${user.name}@`);
   const [separator, setSeparator] = useState("、");
   const [endText, setEndText] = useState("");
-
-  const tasks = useTasks(tasklist);
 
   return (
     <>
@@ -126,73 +86,18 @@ const Section: React.FC<{ user: TwitterUser }> = ({ user }) => {
 
       <Row xs={1} className="g-4 justify-content-center">
         <Col xs={12} lg={10} xl={9} className="d-grid gap-4">
-          <Card body>
-            <Row className="gx-5 gy-3 align-items-center" xs={1} md={2}>
-              <Col>
-                <Card.Title>タスクがあるとき</Card.Title>
-                <Card.Text>
-                  3種類のテキストを、To-Doリスト内の未完了タスクに組み合わせて名前を生成します。
-                </Card.Text>
-                <fieldset className="d-grid gap-2">
-                  <NameComponentInput
-                    examples={(normalName.length > 0 && normalName !== user.name
-                      ? [normalName, user.name]
-                      : [user.name]
-                    ).flatMap((name) => [`${name}@`, `${name}/`, `${name} `])}
-                    text={beginningText}
-                    onChange={setBeginningText}
-                    {...BEGINNING_TEXT}
-                  />
-                  <NameComponentInput
-                    examples={[`、`, `/`]}
-                    text={separator}
-                    onChange={setSeparator}
-                    {...SEPARATOR}
-                  />
-                  <NameComponentInput
-                    examples={[]}
-                    text={endText}
-                    onChange={setEndText}
-                    {...END_TEXT}
-                  />
-                </fieldset>
-              </Col>
-              <Col>
-                <ProfileSampleCard1
-                  user={user}
-                  tasks={tasks}
-                  beginningText={beginningText}
-                  separator={separator}
-                  endText={endText}
-                />
-              </Col>
-            </Row>
-          </Card>
-          <Card body>
-            <Row className="gx-5 gy-3 align-items-center" xs={1} md={2}>
-              <Col>
-                <Card.Title>タスクがないとき</Card.Title>
-                <Card.Text>
-                  未完了タスクがないとき、ここに入力したテキストがそのまま名前になります。
-                </Card.Text>
-                <WithDatalist
-                  datalistId="normalNameDatalist"
-                  options={[user.name]}
-                >
-                  {(datalistId) => (
-                    <Form.Control
-                      value={normalName}
-                      list={datalistId}
-                      onChange={(event) => setNormalName(event.target.value)}
-                    />
-                  )}
-                </WithDatalist>
-              </Col>
-              <Col>
-                <ProfileSampleCard0 user={user} name={normalName} />
-              </Col>
-            </Row>
-          </Card>
+          <RuleCard1
+            user={user}
+            rule={{ tasklist, normalName, beginningText, separator, endText }}
+            onBeginningTextChange={setBeginningText}
+            onSeparatorChange={setSeparator}
+            onEndTextChange={setEndText}
+          />
+          <RuleCard0
+            user={user}
+            normalName={normalName}
+            onChange={setNormalName}
+          />
         </Col>
       </Row>
 
