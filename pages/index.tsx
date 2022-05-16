@@ -6,7 +6,7 @@ import type { NextPage } from "next";
 import { signIn } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Button,
@@ -94,6 +94,12 @@ const ApplyButton: React.FC<{
 }> = ({ rule }) => {
   const [status, setStatus] = useState<"sending" | "success" | "error">();
 
+  const ref = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    ref.current?.scrollIntoView();
+  }, [status]);
+
   return (
     <>
       <Button
@@ -121,16 +127,16 @@ const ApplyButton: React.FC<{
         {status === "sending" ? (
           <Spinner animation="border" size="sm" />
         ) : (
-          "名前を書き換える"
+          "ルールを適用"
         )}
       </Button>
       {status === "success" ? (
-        <p className="text-success text-center my-3">
+        <p className="text-success text-center mt-2" ref={ref}>
           <i className="bi bi-check-circle-fill" />{" "}
           <strong>名前を更新しました</strong>
         </p>
       ) : status === "error" ? (
-        <p className="text-danger text-center my-3">
+        <p className="text-danger text-center mt-2" ref={ref}>
           <i className="bi bi-x-octagon-fill" />{" "}
           <strong>名前を更新できません</strong>
         </p>
@@ -343,7 +349,20 @@ const Home: NextPage = () => {
 
           {downCaret}
 
-          <ApplyButton rule={rule} />
+          <section>
+            <div className="mb-3">
+              <ApplyButton rule={rule} />
+            </div>
+            <p className="mb-0">
+              このボタンを押すと、指定したルールで直ちに名前が更新されます。
+              また、15分ごとにこのルールで名前が更新されるようになります。
+            </p>
+            <p>
+              <small className="text-muted">
+                予告なく自動更新を停止したり、更新頻度を変更する場合があります。
+              </small>
+            </p>
+          </section>
         </>
       ) : (
         <div className="text-muted">
