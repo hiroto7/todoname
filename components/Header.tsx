@@ -13,7 +13,10 @@ const Header = () => {
         <Navbar.Toggle />
         <Navbar.Collapse className="justify-content-end">
           {session && (
-            <Button variant="outline-secondary" onClick={() => signOut()}>
+            <Button
+              variant="outline-secondary"
+              onClick={() => signOut({ callbackUrl: router.pathname })}
+            >
               <i className="bi bi-box-arrow-left" /> ログアウト
             </Button>
           )}

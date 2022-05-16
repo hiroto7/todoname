@@ -1,12 +1,21 @@
 import type { Rule } from "@prisma/client";
-import axios from "axios";
+import assert from "assert";
+import axios, { AxiosError } from "axios";
 import type { oauth2_v2 } from "googleapis";
 import type { NextPage } from "next";
-import { signIn, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { Button, Card, Col, Placeholder, Row, Spinner } from "react-bootstrap";
+import { useEffect, useRef, useState } from "react";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Placeholder,
+  Row,
+  Spinner,
+} from "react-bootstrap";
 import useSWR from "swr";
 import type { UserV2 } from "twitter-api-v2";
 import Layout from "../components/Layout";
@@ -57,12 +66,39 @@ type TwitterUser = Required<
   Pick<UserV2, "id" | "name" | "username" | "profile_image_url" | "protected">
 >;
 
+const SignInErrorAlert: React.FC<{ error: string }> = ({ error }) => (
+  <Alert variant="danger">
+    {error === "OAuthAccountNotLinked" ? (
+      <>
+        <p>
+          アカウントのリンクに失敗しました。以前ログインしたことのあるアカウントを、現在ログイン済みのアカウントにリンクすることはできません。
+        </p>
+        <p>
+          一方のアカウントで「リンクを解除」または「データを削除」を行うことで、リンクできるようになります。
+        </p>
+      </>
+    ) : (
+      <p>ログインに失敗しました。</p>
+    )}
+
+    <p className="mb-0">
+      <small>{error}</small>
+    </p>
+  </Alert>
+);
+
 const ApplyButton: React.FC<{
   rule: Pick<Rule, "beginningText" | "separator" | "endText" | "normalName"> & {
     tasklist: string | undefined;
   };
 }> = ({ rule }) => {
   const [status, setStatus] = useState<"sending" | "success" | "error">();
+
+  const ref = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    ref.current?.scrollIntoView();
+  }, [status]);
 
   return (
     <>
@@ -80,7 +116,7 @@ const ApplyButton: React.FC<{
             : async () => {
                 try {
                   setStatus("sending");
-                  await axios.post("/api/update", rule);
+                  await axios.put("/api/rule", rule);
                   setStatus("success");
                 } catch (e) {
                   setStatus("error");
@@ -91,18 +127,18 @@ const ApplyButton: React.FC<{
         {status === "sending" ? (
           <Spinner animation="border" size="sm" />
         ) : (
-          "名前を書き換える"
+          "ルールを適用"
         )}
       </Button>
       {status === "success" ? (
-        <p className="text-success text-center my-3">
+        <p className="text-success text-center mt-2" ref={ref}>
           <i className="bi bi-check-circle-fill" />{" "}
-          <strong>名前を更新しました</strong>
+          <strong>ルールを適用し、名前を更新しました</strong>
         </p>
       ) : status === "error" ? (
-        <p className="text-danger text-center my-3">
+        <p className="text-danger text-center mt-2" ref={ref}>
           <i className="bi bi-x-octagon-fill" />{" "}
-          <strong>名前を更新できません</strong>
+          <strong>ルールを適用できませんでした</strong>
         </p>
       ) : (
         <></>
@@ -112,7 +148,10 @@ const ApplyButton: React.FC<{
 };
 
 const Home: NextPage = () => {
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { error } = router.query;
+
+  assert(!(error instanceof Array));
 
   const {
     data: twitter,
@@ -123,6 +162,14 @@ const Home: NextPage = () => {
   const { data: google, error: googleError } =
     useSWR<oauth2_v2.Schema$Userinfo>("/api/google", fetcher, { onErrorRetry });
 
+  const { data: storedRule, error: ruleError } = useSWR<Rule>(
+    "/api/rule",
+    fetcher,
+    {
+      onErrorRetry,
+    }
+  );
+
   const [rule, setRule] = useState<
     Pick<Rule, "beginningText" | "separator" | "endText" | "normalName"> & {
       tasklist: string | undefined;
@@ -130,16 +177,23 @@ const Home: NextPage = () => {
   >();
 
   useEffect(() => {
-    if (!rule && twitter) {
-      setRule({
-        beginningText: `${twitter.name}@`,
-        separator: "、",
-        endText: "",
-        normalName: twitter.name,
-        tasklist: undefined,
-      });
+    if (
+      !rule &&
+      twitter &&
+      (storedRule ||
+        (ruleError instanceof AxiosError && ruleError.response?.status === 404))
+    ) {
+      setRule(
+        storedRule ?? {
+          beginningText: `${twitter.name}@`,
+          separator: "、",
+          endText: "",
+          normalName: twitter.name,
+          tasklist: undefined,
+        }
+      );
     }
-  }, [rule, twitter]);
+  }, [rule, ruleError, storedRule, twitter]);
 
   return (
     <Layout>
@@ -172,6 +226,7 @@ const Home: NextPage = () => {
         まず、TwitterアカウントとGoogleアカウントの<strong>両方に</strong>
         ログインします。
       </p>
+      {error && <SignInErrorAlert error={error} />}
 
       <Row xs={1} md={2} className="g-4 justify-content-center">
         <Col sm={10} lg={5} xl={4}>
@@ -294,7 +349,20 @@ const Home: NextPage = () => {
 
           {downCaret}
 
-          <ApplyButton rule={rule} />
+          <section>
+            <div className="mb-3">
+              <ApplyButton rule={rule} />
+            </div>
+            <p className="mb-0">
+              このボタンを押すと、指定したルールで直ちに名前が更新されます。
+              また、15分ごとにこのルールで名前が更新されるようになります。
+            </p>
+            <p>
+              <small className="text-muted">
+                予告なく自動更新を停止したり、更新頻度を変更する場合があります。
+              </small>
+            </p>
+          </section>
         </>
       ) : (
         <div className="text-muted">
