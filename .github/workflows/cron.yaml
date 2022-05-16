@@ -9,5 +9,5 @@ jobs:
       - name: Call our API route
         run: |
           curl --fail --request POST \
-          --url 'https://todoname.vercel.com/api/cron' \
+          --url 'https://todoname.vercel.app/api/cron' \
           --header 'Authorization: Bearer ${{ secrets.API_SECRET_KEY }}'
