@@ -5,6 +5,7 @@ import { google } from "googleapis";
 import type { NextApiHandler } from "next";
 import { getSession } from "next-auth/react";
 import { TwitterApi } from "twitter-api-v2";
+import constructName from "../../lib/constructName";
 import prisma from "../../lib/prisma";
 
 const oAuth2Client = new google.auth.OAuth2({
@@ -31,11 +32,9 @@ const handler: NextApiHandler<Rule> = async (req, res) => {
         where: { userId: session.user.id },
       });
 
-      if (rule) {
-        res.status(200).json(rule);
-      } else {
-        res.status(404).end();
-      }
+      if (rule) res.status(200).json(rule);
+      else res.status(404).end();
+
       return;
     }
     case "PUT": {
@@ -70,29 +69,27 @@ const handler: NextApiHandler<Rule> = async (req, res) => {
         accessSecret: twitter.oauth_token_secret!,
       });
 
-      const { tasklist, normalName, beginningText, separator, endText } =
-        req.body;
+      const {
+        tasklist,
+        normalName,
+        beginningText,
+        separator,
+        endText,
+      }: Pick<
+        Rule,
+        "tasklist" | "normalName" | "beginningText" | "separator" | "endText"
+      > = req.body;
 
       const tasks = (await service.tasks.list({ tasklist })).data.items;
 
       assert(tasks !== undefined);
 
-      if (tasks.length > 0) {
-        const sorted = tasks.sort((a, b) => {
-          assert(typeof a.position === "string");
-          assert(typeof b.position === "string");
-          return a.position.localeCompare(b.position);
-        });
-        const taskNames = sorted.map(({ title }) => title);
-
-        await twitterClient.v1.updateAccountProfile({
-          name: `${beginningText}${taskNames.join(separator)}${endText}`,
-        });
-      } else {
-        await twitterClient.v1.updateAccountProfile({
-          name: normalName,
-        });
-      }
+      await twitterClient.v1.updateAccountProfile({
+        name: constructName({
+          tasks,
+          rule: { normalName, beginningText, separator, endText },
+        }),
+      });
 
       const rule = await prisma.rule.upsert({
         where: { userId: session.user.id },
