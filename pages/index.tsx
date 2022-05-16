@@ -133,12 +133,12 @@ const ApplyButton: React.FC<{
       {status === "success" ? (
         <p className="text-success text-center mt-2" ref={ref}>
           <i className="bi bi-check-circle-fill" />{" "}
-          <strong>名前を更新しました</strong>
+          <strong>ルールを適用し、名前を更新しました</strong>
         </p>
       ) : status === "error" ? (
         <p className="text-danger text-center mt-2" ref={ref}>
           <i className="bi bi-x-octagon-fill" />{" "}
-          <strong>名前を更新できません</strong>
+          <strong>ルールを適用できませんでした</strong>
         </p>
       ) : (
         <></>
