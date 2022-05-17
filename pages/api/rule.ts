@@ -75,17 +75,8 @@ const handler: NextApiHandler<Rule> = async (req, res) => {
 
       await prisma.rule.upsert({
         where: { userId: session.user.id },
-        create: {
-          ...rule,
-          userId: session.user.id,
-          enabled: true,
-          lastGeneratedName: generatedName,
-        },
-        update: {
-          ...rule,
-          enabled: true,
-          lastGeneratedName: generatedName,
-        },
+        create: { ...rule, userId: session.user.id, generatedName },
+        update: { ...rule, generatedName },
       });
 
       res.status(204).end();

@@ -50,16 +50,15 @@ model User {
 }
 
 model Rule {
-  id                String  @id @default(cuid())
-  tasklist          String
-  beginningText     String
-  separator         String
-  endText           String
-  normalName        String
-  enabled           Boolean
-  lastGeneratedName String
-  userId            String  @unique
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String  @id @default(cuid())
+  tasklist      String
+  beginningText String
+  separator     String
+  endText       String
+  normalName    String
+  generatedName String?
+  userId        String  @unique
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {

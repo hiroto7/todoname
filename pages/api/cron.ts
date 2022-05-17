@@ -15,7 +15,7 @@ const handler: NextApiHandler = async (req, res) => {
       }
 
       const rules = await prisma.rule.findMany({
-        where: { enabled: true },
+        where: { generatedName: { not: null } },
         include: { user: { select: { accounts: true } } },
       });
 
@@ -47,10 +47,10 @@ const handler: NextApiHandler = async (req, res) => {
         const user = (await twitterClient.v2.me()).data;
         if (user.name === generatedName) continue;
 
-        if (user.name !== rule.lastGeneratedName) {
+        if (user.name !== rule.generatedName) {
           await prisma.rule.update({
             where: { userId: rule.userId },
-            data: { enabled: false },
+            data: { generatedName: null },
           });
         } else {
           await twitterClient.v1.updateAccountProfile({
@@ -58,7 +58,7 @@ const handler: NextApiHandler = async (req, res) => {
           });
           await prisma.rule.update({
             where: { userId: rule.userId },
-            data: { lastGeneratedName: generatedName },
+            data: { generatedName },
           });
         }
       }
