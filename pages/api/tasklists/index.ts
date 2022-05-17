@@ -23,11 +23,9 @@ const handler: NextApiHandler<tasks_v1.Schema$TaskList[]> = async (
     });
 
     if (account) {
-      oAuth2Client.setCredentials({
-        access_token: account.access_token,
-        scope: "https://www.googleapis.com/auth/tasks.readonly",
-        token_type: "Bearer",
-      });
+      const { scope } = account;
+      assert(scope !== null);
+      oAuth2Client.setCredentials({ ...account, scope });
 
       const tasklists = (await service.tasklists.list()).data.items;
       assert(tasklists !== undefined);

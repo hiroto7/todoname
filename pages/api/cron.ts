@@ -40,11 +40,9 @@ const handler: NextApiHandler = async (req, res) => {
 
         if (!twitter || !google) continue;
 
-        oAuth2Client.setCredentials({
-          access_token: google.access_token,
-          scope: "https://www.googleapis.com/auth/tasks.readonly",
-          token_type: "Bearer",
-        });
+        const { scope } = google;
+        assert(scope !== null);
+        oAuth2Client.setCredentials({ ...google, scope });
 
         const twitterClient = new TwitterApi({
           appKey: process.env.TWITTER_ID,

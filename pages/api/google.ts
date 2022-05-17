@@ -1,3 +1,4 @@
+import assert from "assert";
 import { google, type oauth2_v2 } from "googleapis";
 import { GaxiosError } from "googleapis-common";
 import type { NextApiHandler } from "next";
@@ -20,10 +21,9 @@ const handler: NextApiHandler<oauth2_v2.Schema$Userinfo> = async (req, res) => {
     });
 
     if (account) {
-      oAuth2Client.setCredentials({
-        access_token: account.access_token,
-        token_type: "Bearer",
-      });
+      const { scope } = account;
+      assert(scope !== null);
+      oAuth2Client.setCredentials({ ...account, scope });
 
       try {
         const [userinfoResponse, tokeninfoResponse] = await Promise.all([

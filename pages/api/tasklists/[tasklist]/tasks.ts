@@ -13,6 +13,8 @@ const service = google.tasks({ version: "v1", auth: oAuth2Client });
 
 const handler: NextApiHandler<tasks_v1.Schema$Task[]> = async (req, res) => {
   const { tasklist } = req.query;
+  assert(typeof tasklist === "string");
+  
   const session = await getSession({ req });
 
   if (session) {
@@ -21,14 +23,11 @@ const handler: NextApiHandler<tasks_v1.Schema$Task[]> = async (req, res) => {
     });
 
     if (account) {
-      oAuth2Client.setCredentials({
-        access_token: account.access_token,
-        scope: "https://www.googleapis.com/auth/tasks.readonly",
-        token_type: "Bearer",
-      });
+      const { scope } = account;
+      assert(scope !== null);
+      oAuth2Client.setCredentials({ ...account, scope });
 
-      const tasks = (await service.tasks.list({ tasklist: tasklist as string }))
-        .data.items;
+      const tasks = (await service.tasks.list({ tasklist })).data.items;
 
       assert(tasks !== undefined);
       const sorted = tasks.sort((a, b) => {
