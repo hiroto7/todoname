@@ -56,7 +56,7 @@ model Rule {
   separator     String
   endText       String
   normalName    String
-  enabled       Boolean
+  generatedName String?
   userId        String  @unique
   user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

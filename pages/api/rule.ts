@@ -1,22 +1,10 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { Rule } from "@prisma/client";
 import assert from "assert";
-import { google } from "googleapis";
 import type { NextApiHandler } from "next";
 import { getSession } from "next-auth/react";
 import { TwitterApi } from "twitter-api-v2";
-import constructName from "../../lib/constructName";
+import generateName from "../../lib/generateName";
 import prisma from "../../lib/prisma";
-
-const oAuth2Client = new google.auth.OAuth2({
-  clientId: process.env.GOOGLE_ID,
-  clientSecret: process.env.GOOGLE_SECRET,
-});
-
-const service = google.tasks({
-  version: "v1",
-  auth: oAuth2Client,
-});
 
 const handler: NextApiHandler<Rule> = async (req, res) => {
   switch (req.method) {
@@ -56,10 +44,6 @@ const handler: NextApiHandler<Rule> = async (req, res) => {
         return;
       }
 
-      const { scope } = google;
-      assert(scope !== null);
-      oAuth2Client.setCredentials({ ...google, scope });
-
       const twitterClient = new TwitterApi({
         appKey: process.env.TWITTER_ID,
         appSecret: process.env.TWITTER_SECRET,
@@ -77,40 +61,25 @@ const handler: NextApiHandler<Rule> = async (req, res) => {
         Rule,
         "tasklist" | "normalName" | "beginningText" | "separator" | "endText"
       > = req.body;
+      const rule = { tasklist, normalName, beginningText, separator, endText };
 
-      const tasks = (await service.tasks.list({ tasklist })).data.items;
+      const { scope } = google;
+      assert(scope !== null);
 
-      assert(tasks !== undefined);
-
-      await twitterClient.v1.updateAccountProfile({
-        name: constructName({
-          tasks,
-          rule: { normalName, beginningText, separator, endText },
-        }),
+      const generatedName = await generateName({
+        credentials: { ...google, scope },
+        rule,
       });
 
-      const rule = await prisma.rule.upsert({
+      await twitterClient.v1.updateAccountProfile({ name: generatedName });
+
+      await prisma.rule.upsert({
         where: { userId: session.user.id },
-        create: {
-          enabled: true,
-          tasklist,
-          normalName,
-          beginningText,
-          separator,
-          endText,
-          userId: session.user.id,
-        },
-        update: {
-          enabled: true,
-          tasklist,
-          normalName,
-          beginningText,
-          separator,
-          endText,
-        },
+        create: { ...rule, userId: session.user.id, generatedName },
+        update: { ...rule, generatedName },
       });
 
-      res.status(200).json(rule);
+      res.status(204).end();
       return;
     }
     default: {
