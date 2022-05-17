@@ -26,13 +26,8 @@ const handler: NextApiHandler<oauth2_v2.Schema$Userinfo> = async (req, res) => {
       oAuth2Client.setCredentials({ ...account, scope });
 
       try {
-        const [userinfoResponse, tokeninfoResponse] = await Promise.all([
-          service.userinfo.get(),
-          service.tokeninfo(),
-        ]);
-
-        const userinfo = userinfoResponse.data;
-        const tokeninfo = tokeninfoResponse.data;
+        const userinfo = (await service.userinfo.get()).data;
+        const tokeninfo = (await service.tokeninfo()).data;
 
         if (
           tokeninfo.scope
