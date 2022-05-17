@@ -353,9 +353,12 @@ const Home: NextPage = () => {
             <div className="mb-3">
               <ApplyButton rule={rule} />
             </div>
-            <p className="mb-0">
+            <p>
               このボタンを押すと、指定したルールで直ちに名前が更新されます。
+            </p>
+            <p>
               また、15分ごとにこのルールで名前が更新されるようになります。
+              ただし、名前が手動で変更された場合は、自動更新が停止されます。
             </p>
             <p>
               <small className="text-muted">
