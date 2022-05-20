@@ -71,8 +71,8 @@ const SignedInAccountOptionsButton: React.FC<{ id: string; name: string }> = ({
 };
 
 const downCaret = (
-  <div className="text-center my-4">
-    <i className="bi bi-caret-down-fill display-6" />
+  <div className="text-center mt-5">
+    <i className="bi bi-chevron-double-down display-6" />
   </div>
 );
 
@@ -235,100 +235,109 @@ const Home: NextPage = () => {
         </small>
       </p>
 
-      <h2>アカウントにログイン</h2>
-      <p>
-        まず、TwitterアカウントとGoogleアカウントの<strong>両方に</strong>
-        ログインします。
-      </p>
-      {error && <SignInErrorAlert error={error} />}
+      <section className="mt-5">
+        <h2>アカウントにログイン</h2>
+        <p>
+          まず、TwitterアカウントとGoogleアカウントの<strong>両方に</strong>
+          ログインします。
+        </p>
+        {error && <SignInErrorAlert error={error} />}
 
-      <Row className="justify-content-center">
-        <Col className="d-grid gap-4" lg={10} xl={9}>
-          <Card body>
-            <Row className="gy-2 align-items-center">
-              <Col>
-                <Card.Title>Twitterアカウント</Card.Title>
-                <Card.Text className="text-muted">
-                  ログインしたアカウントのプロフィールの名前が書き換えられます。
-                </Card.Text>
-              </Col>
-              {twitterError instanceof AxiosError &&
-              twitterError.response?.status === 401 ? (
-                <Col sm="auto">
-                  <SignInButton id="twitter" name="Twitter" />
+        <Row className="justify-content-center">
+          <Col className="d-grid gap-4" lg={10} xl={9}>
+            <Card body>
+              <Row className="gy-3 align-items-center">
+                <Col>
+                  <Card.Title>Twitterアカウント</Card.Title>
+                  <Card.Text className="text-muted">
+                    ログインしたアカウントのプロフィールの名前が書き換えられます。
+                  </Card.Text>
                 </Col>
-              ) : twitter ? (
-                <Col sm="auto">
-                  <Row className="align-items-center gx-3">
-                    <Col>
-                      <SignedInAccountOptionsButton
-                        id="twitter"
-                        name="Twitter"
-                      />
-                    </Col>
+                {twitterError instanceof AxiosError &&
+                twitterError.response?.status === 401 ? (
+                  <Col sm="auto">
+                    <SignInButton id="twitter" name="Twitter" />
+                  </Col>
+                ) : twitter ? (
+                  <Col sm="auto">
+                    <Row className="align-items-center gx-3">
+                      <Col>
+                        <SignedInAccountOptionsButton
+                          id="twitter"
+                          name="Twitter"
+                        />
+                      </Col>
 
-                    <Col xs="auto">
-                      <OverlayTrigger
-                        overlay={(props) => (
-                          // @ts-expect-error
-                          <Tooltip {...props}>
-                            <TwitterProfileName isProtected={twitter.protected}>
-                              {twitter.name}
-                            </TwitterProfileName>{" "}
-                            <small>@{twitter.username}</small>
-                          </Tooltip>
-                        )}
-                      >
+                      <Col xs="auto">
+                        <OverlayTrigger
+                          overlay={(props) => (
+                            // @ts-expect-error
+                            <Tooltip {...props}>
+                              <TwitterProfileName
+                                isProtected={twitter.protected}
+                              >
+                                {twitter.name}
+                              </TwitterProfileName>{" "}
+                              <small>@{twitter.username}</small>
+                            </Tooltip>
+                          )}
+                        >
                           <div>
-                        <ProfileImage src={twitter.profile_image_url} />
+                            <ProfileImage src={twitter.profile_image_url} />
                           </div>
-                      </OverlayTrigger>
-                    </Col>
-                  </Row>
-                </Col>
-              ) : (
-                <Col sm={3}>
-                  <Placeholder.Button variant="secondary" xs={12} />
-                </Col>
-              )}
-            </Row>
-          </Card>
+                        </OverlayTrigger>
+                      </Col>
+                    </Row>
+                  </Col>
+                ) : (
+                  <Col sm={3}>
+                    <Placeholder.Button variant="secondary" xs={12} />
+                  </Col>
+                )}
+              </Row>
+            </Card>
 
-          <Card body>
-            <Row className="gy-2 align-items-center">
-              <Col>
-                <Card.Title>Googleアカウント</Card.Title>
-                <Card.Text className="text-muted">
-                  ログインしたアカウントのGoogle Tasksの内容が使用されます。
-                </Card.Text>
-              </Col>
-              {googleError instanceof AxiosError &&
-              (googleError.response?.status === 401 ||
-                googleError.response?.status === 403) ? (
-                <Col sm="auto">
-                  <SignInButton id="google" name="Google" />
+            <Card body>
+              <Row className="gy-3 align-items-center">
+                <Col>
+                  <Card.Title>Googleアカウント</Card.Title>
+                  <Card.Text className="text-muted">
+                    ログインしたアカウントのGoogle Tasksの内容が使用されます。
+                  </Card.Text>
                 </Col>
-              ) : google ? (
-                <Col sm="auto">
-                  <Row className="align-items-center gx-3">
-                    <Col>
-                      <SignedInAccountOptionsButton id="google" name="Google" />
-                    </Col>
+                {googleError instanceof AxiosError &&
+                (googleError.response?.status === 401 ||
+                  googleError.response?.status === 403) ? (
+                  <Col sm="auto">
+                    <SignInButton id="google" name="Google" />
+                  </Col>
+                ) : google ? (
+                  <Col sm="auto">
+                    <Row className="align-items-center gx-3">
+                      <Col>
+                        <SignedInAccountOptionsButton
+                          id="google"
+                          name="Google"
+                        />
+                      </Col>
 
-                    <Col xs="auto">
-                      <ProfileImage src={google.picture!} />
-                    </Col>
-                  </Row>
-                </Col>
-              ) : (
-                <Col sm={3}>
-                  <Placeholder.Button variant="secondary" xs={12} />
-                </Col>
-              )}
-            </Row>
-          </Card>
-        </Col>
-      </Row>
+                      <Col xs="auto">
+                        <ProfileImage src={google.picture!} />
+                      </Col>
+                    </Row>
+                  </Col>
+                ) : (
+                  <Col sm={3}>
+                    <Placeholder.Button variant="secondary" xs={12} />
+                  </Col>
+                )}
+              </Row>
+            </Card>
+          </Col>
+        </Row>
+      </section>
+
+      {downCaret}
 
       {rule &&
       twitter &&
@@ -343,13 +352,9 @@ const Home: NextPage = () => {
           googleError.response?.status === 403)
       ) ? (
         <>
-          {downCaret}
-
-          <section>
+          <section className="mt-5">
             <h2>To-Doリストを選択</h2>
-            <p className="mb-0">
-              ここで選択したTo-Doリストの内容から名前が生成されます。
-            </p>
+            <p>ここで選択したTo-Doリストの内容から名前が生成されます。</p>
             <p>
               <small className="text-warning">
                 <i className="bi bi-exclamation-triangle-fill" />{" "}
@@ -376,7 +381,7 @@ const Home: NextPage = () => {
           </section>
           {downCaret}
 
-          <section>
+          <section className="mt-5">
             <h2>名前の生成ルールを指定</h2>
 
             <Row className="g-4 justify-content-center">
@@ -403,7 +408,7 @@ const Home: NextPage = () => {
 
           {downCaret}
 
-          <section>
+          <section className="mt-5">
             <div className="mb-3">
               <ApplyButton rule={rule} />
             </div>
@@ -422,12 +427,9 @@ const Home: NextPage = () => {
           </section>
         </>
       ) : (
-        <div className="text-muted">
-          {downCaret}
-          <p className="text-center">To-Doリストを選択</p>
-          {downCaret}
-          <p className="text-center">名前の生成方法を指定</p>
-        </div>
+        <p className="text-muted text-center mt-5">
+          両方のアカウントにログインしたら、名前の生成ルールを指定します
+        </p>
       )}
     </Layout>
   );
