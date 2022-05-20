@@ -111,17 +111,14 @@ const ProfileSampleCard: React.FC<{
         <ProfileSummary
           name={
             apparentTasks ? (
-              <TwitterProfileName
-                name={
-                  <NameSample
-                    tasks={apparentTasks}
-                    beginningText={beginningText}
-                    separator={separator}
-                    endText={endText}
-                  />
-                }
-                isProtected={user.protected}
-              />
+              <TwitterProfileName isProtected={user.protected}>
+                <NameSample
+                  tasks={apparentTasks}
+                  beginningText={beginningText}
+                  separator={separator}
+                  endText={endText}
+                />
+              </TwitterProfileName>
             ) : (
               <Placeholder as="div" animation="glow">
                 <Placeholder xs={6} />

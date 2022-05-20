@@ -2,15 +2,15 @@ import { Col, Image, Row } from "react-bootstrap";
 import type { UserV2 } from "twitter-api-v2";
 
 export const TwitterProfileName: React.FC<{
-  name: React.ReactNode;
+  children: React.ReactNode;
   isProtected: boolean;
-}> = ({ name, isProtected }) =>
+}> = ({ children, isProtected }) =>
   isProtected ? (
     <>
-      {name} <i className="bi bi-lock-fill" />
+      {children} <i className="bi bi-lock-fill" />
     </>
   ) : (
-    <>{name}</>
+    <>{children}</>
   );
 
 type TwitterUser = Required<
@@ -22,10 +22,18 @@ export const TwitterProfileSummary: React.FC<{
   name: React.ReactNode;
 }> = ({ user, name }) => (
   <ProfileSummary
-    name={<TwitterProfileName name={name} isProtected={user.protected} />}
+    name={
+      <TwitterProfileName isProtected={user.protected}>
+        {name}
+      </TwitterProfileName>
+    }
     id={`@${user.username}`}
     image={user.profile_image_url}
   />
+);
+
+export const ProfileImage: React.FC<{ src: string }> = ({ src }) => (
+  <Image width={48} height={48} src={src} alt="avatar photo" roundedCircle />
 );
 
 const ProfileSummary: React.FC<{
@@ -35,13 +43,7 @@ const ProfileSummary: React.FC<{
 }> = ({ id, name, image }) => (
   <Row className="gx-3">
     <Col xs="auto">
-      <Image
-        width={48}
-        height={48}
-        src={image}
-        alt="avatar photo"
-        roundedCircle
-      />
+      <ProfileImage src={image} />
     </Col>
     <Col>
       <div>{name}</div>

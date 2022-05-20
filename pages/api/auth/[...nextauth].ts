@@ -16,8 +16,7 @@ export default NextAuth({
       clientSecret: process.env.GOOGLE_SECRET,
       authorization: {
         params: {
-          scope:
-            "openid email profile https://www.googleapis.com/auth/tasks.readonly",
+          scope: "openid https://www.googleapis.com/auth/tasks.readonly",
           access_type: "offline",
         },
       },
