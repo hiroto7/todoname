@@ -9,7 +9,7 @@ const Header = () => {
   return (
     <Navbar bg="dark" variant="dark">
       <Container>
-        <Navbar.Brand>To-Do Name</Navbar.Brand>
+        <Navbar.Brand>todoname</Navbar.Brand>
         <Navbar.Toggle />
         <Navbar.Collapse className="justify-content-end">
           {session && (
