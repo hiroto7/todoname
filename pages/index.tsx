@@ -279,7 +279,9 @@ const Home: NextPage = () => {
                           </Tooltip>
                         )}
                       >
+                          <div>
                         <ProfileImage src={twitter.profile_image_url} />
+                          </div>
                       </OverlayTrigger>
                     </Col>
                   </Row>
