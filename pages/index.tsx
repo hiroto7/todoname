@@ -28,20 +28,7 @@ import RuleCard1 from "../components/RuleCard1";
 import TasklistPicker from "../components/TasklistPicker";
 import fetcher from "../lib/fetcher";
 import onErrorRetry from "../lib/onErrorRetry";
-
-const SignInButton: React.FC<{ id: string; name: string }> = ({ id, name }) => {
-  const router = useRouter();
-
-  return (
-    <Button
-      variant="secondary"
-      className="w-100"
-      onClick={() => signIn(id, { callbackUrl: router.pathname })}
-    >
-      <i className="bi bi-box-arrow-in-right" /> {name}でログイン
-    </Button>
-  );
-};
+import styles from "../styles/SignInWithGoogleButton.module.css";
 
 const SignedInAccountOptionsButton: React.FC<{ id: string; name: string }> = ({
   id,
@@ -246,8 +233,8 @@ const Home: NextPage = () => {
         <Row className="justify-content-center">
           <Col className="d-grid gap-4" lg={10} xl={9}>
             <Card body>
-              <Row className="gy-3 align-items-center">
-                <Col>
+              <Row className="gy-3 align-items-center justify-content-center">
+                <Col xs={12} sm>
                   <Card.Title>Twitterアカウント</Card.Title>
                   <Card.Text className="text-muted">
                     ログインしたアカウントのプロフィールの名前が書き換えられます。
@@ -255,8 +242,15 @@ const Home: NextPage = () => {
                 </Col>
                 {twitterError instanceof AxiosError &&
                 twitterError.response?.status === 401 ? (
-                  <Col sm="auto">
-                    <SignInButton id="twitter" name="Twitter" />
+                  <Col xs="auto">
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        signIn("twitter", { callbackUrl: router.pathname })
+                      }
+                    >
+                      <i className="bi bi-twitter" /> Twitterでログイン
+                    </Button>
                   </Col>
                 ) : twitter ? (
                   <Col sm="auto">
@@ -290,7 +284,7 @@ const Home: NextPage = () => {
                     </Row>
                   </Col>
                 ) : (
-                  <Col sm={3}>
+                  <Col xs={6} sm={3}>
                     <Placeholder.Button variant="secondary" xs={12} />
                   </Col>
                 )}
@@ -298,8 +292,8 @@ const Home: NextPage = () => {
             </Card>
 
             <Card body>
-              <Row className="gy-3 align-items-center">
-                <Col>
+              <Row className="gy-3 align-items-center justify-content-center">
+                <Col xs={12} sm>
                   <Card.Title>Googleアカウント</Card.Title>
                   <Card.Text className="text-muted">
                     ログインしたアカウントのGoogle Tasksの内容が使用されます。
@@ -308,8 +302,13 @@ const Home: NextPage = () => {
                 {googleError instanceof AxiosError &&
                 (googleError.response?.status === 401 ||
                   googleError.response?.status === 403) ? (
-                  <Col sm="auto">
-                    <SignInButton id="google" name="Google" />
+                  <Col xs="auto">
+                    <button
+                      className={styles["btn"]}
+                      onClick={() =>
+                        signIn("google", { callbackUrl: router.pathname })
+                      }
+                    />
                   </Col>
                 ) : google ? (
                   <Col sm="auto">
@@ -327,8 +326,8 @@ const Home: NextPage = () => {
                     </Row>
                   </Col>
                 ) : (
-                  <Col sm={3}>
-                    <Placeholder.Button variant="secondary" xs={12} />
+                  <Col xs="auto">
+                    <button className={styles["btn"]} disabled />
                   </Col>
                 )}
               </Row>
