@@ -1,0 +1,41 @@
+.btn {
+  background-image: image-set(
+      url("/btn_google_signin_light_normal_web.png") 1x,
+      url("/btn_google_signin_light_normal_web@2x.png") 2x
+    ),
+    image-set(
+      url("/btn_google_signin_light_focus_web.png") 1x,
+      url("/btn_google_signin_light_focus_web@2x.png") 2x
+    ),
+    image-set(
+      url("/btn_google_signin_light_pressed_web.png") 1x,
+      url("/btn_google_signin_light_pressed_web@2x.png") 2x
+    ),
+    image-set(
+      url("/btn_google_signin_light_disabled_web.png") 1x,
+      url("/btn_google_signin_light_disabled_web@2x.png") 2x
+    );
+  width: 191px;
+  height: 46px;
+
+  background-color: transparent;
+  border: 0;
+  padding: 0;
+  vertical-align: middle;
+
+  background-size: auto, 0, 0, 0;
+}
+
+.btn:focus {
+  outline: 0;
+
+  background-size: 0, auto, 0, 0;
+}
+
+.btn:active {
+  background-size: 0, 0, auto, 0;
+}
+
+.btn:disabled {
+  background-size: 0, 0, 0, auto;
+}

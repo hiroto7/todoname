@@ -61,7 +61,7 @@ const RuleCard1: React.FC<{
         <Col>
           <Card.Title>タスクがあるとき</Card.Title>
           <Card.Text>
-            3種類のテキストを、To-Doリスト内の未完了タスクに組み合わせて名前を生成します。
+            3種類のテキストを、ToDoリスト内の未完了タスクに組み合わせて名前を生成します。
           </Card.Text>
           <fieldset className="d-grid gap-2">
             <NameComponentInput
