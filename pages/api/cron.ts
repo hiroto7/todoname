@@ -2,16 +2,11 @@ import assert from "assert";
 import { GaxiosError } from "googleapis-common";
 import type { NextApiHandler } from "next";
 import { ApiResponseError, TwitterApi } from "twitter-api-v2";
+import disableRule from "../../lib/disableRule";
 import generateName from "../../lib/generateName";
 import prisma from "../../lib/prisma";
 
-const disableRule = (userId: string) =>
-  prisma.rule.update({
-    where: { userId },
-    data: { generatedName: null },
-  });
-
-const handler: NextApiHandler = async (req, res) => {
+const handler: NextApiHandler<void> = async (req, res) => {
   if (req.method === "POST") {
     try {
       const { authorization } = req.headers;

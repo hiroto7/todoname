@@ -92,7 +92,8 @@ const ApplyButton: React.FC<{
   rule: Pick<Rule, "beginningText" | "separator" | "endText" | "normalName"> & {
     tasklist: string | undefined;
   };
-}> = ({ rule }) => {
+  onComplete: () => void;
+}> = ({ rule, onComplete }) => {
   const [status, setStatus] = useState<"sending" | "success" | "error">();
 
   const ref = useRef<HTMLParagraphElement>(null);
@@ -119,6 +120,7 @@ const ApplyButton: React.FC<{
                   setStatus("sending");
                   await axios.put("/api/rule", rule);
                   setStatus("success");
+                  onComplete();
                 } catch (e) {
                   setStatus("error");
                 }
@@ -154,22 +156,22 @@ const Home: NextPage = () => {
 
   assert(!(error instanceof Array));
 
-  const {
-    data: twitter,
-    error: twitterError,
-    mutate,
-  } = useSWR<TwitterUser>("/api/twitter", fetcher, { onErrorRetry });
+  const { data: twitter, error: twitterError } = useSWR<TwitterUser>(
+    "/api/twitter",
+    fetcher,
+    { onErrorRetry }
+  );
 
   const { data: google, error: googleError } =
     useSWR<oauth2_v2.Schema$Userinfo>("/api/google", fetcher, { onErrorRetry });
 
-  const { data: storedRule, error: ruleError } = useSWR<Rule>(
-    "/api/rule",
-    fetcher,
-    {
-      onErrorRetry,
-    }
-  );
+  const {
+    data: storedRule,
+    error: ruleError,
+    mutate,
+  } = useSWR<Rule>("/api/rule", fetcher, {
+    onErrorRetry,
+  });
 
   const [rule, setRule] = useState<
     Pick<Rule, "beginningText" | "separator" | "endText" | "normalName"> & {
@@ -214,7 +216,7 @@ const Home: NextPage = () => {
         >
           Google Tasks
         </a>
-        から未完了タスクを自動的に取得し、指定したルールでTwitterの名前へ反映されるようにできます。Twitterを開いている間なら、やることを忘れる心配がありません。
+        から未完了タスクを定期的に取得し、指定したルールでTwitterの名前へ反映されるようにできます。Twitterを開いている間なら、やることを忘れる心配がありません。
       </p>
       <p>
         <small className="text-muted">
@@ -362,6 +364,7 @@ const Home: NextPage = () => {
                   href="https://support.google.com/tasks/answer/7675771"
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="link-warning"
                 >
                   Google Tasksで新たなリストを作成
                 </a>
@@ -409,7 +412,7 @@ const Home: NextPage = () => {
 
           <section className="mt-5">
             <div className="mb-3">
-              <ApplyButton rule={rule} />
+              <ApplyButton rule={rule} onComplete={mutate} />
             </div>
             <p>
               このボタンを押すと、指定したルールで直ちに名前が更新されます。

@@ -3,8 +3,8 @@ import assert from "assert";
 import type { NextApiHandler } from "next";
 import { getSession } from "next-auth/react";
 import { TwitterApi } from "twitter-api-v2";
-import generateName from "../../lib/generateName";
-import prisma from "../../lib/prisma";
+import generateName from "../../../lib/generateName";
+import prisma from "../../../lib/prisma";
 
 const handler: NextApiHandler<Rule> = async (req, res) => {
   switch (req.method) {
