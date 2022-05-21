@@ -1,8 +1,15 @@
 import assert from "assert";
+import { GaxiosError } from "googleapis-common";
 import type { NextApiHandler } from "next";
-import { TwitterApi } from "twitter-api-v2";
+import { ApiResponseError, TwitterApi } from "twitter-api-v2";
 import generateName from "../../lib/generateName";
 import prisma from "../../lib/prisma";
+
+const disableRule = (userId: string) =>
+  prisma.rule.update({
+    where: { userId },
+    data: { generatedName: null },
+  });
 
 const handler: NextApiHandler = async (req, res) => {
   if (req.method === "POST") {
@@ -39,20 +46,20 @@ const handler: NextApiHandler = async (req, res) => {
         const { scope } = google;
         assert(scope !== null);
 
-        const generatedName = await generateName({
-          credentials: { ...google, scope },
-          rule,
-        });
-
-        const user = (await twitterClient.v2.me()).data;
-        if (user.name === generatedName) continue;
-
-        if (user.name !== rule.generatedName) {
-          await prisma.rule.update({
-            where: { userId: rule.userId },
-            data: { generatedName: null },
+        try {
+          const generatedName = await generateName({
+            credentials: { ...google, scope },
+            rule,
           });
-        } else {
+
+          const user = (await twitterClient.v2.me()).data;
+          if (user.name === generatedName) continue;
+
+          if (user.name !== rule.generatedName) {
+            await disableRule(rule.userId);
+            continue;
+          }
+
           await twitterClient.v1.updateAccountProfile({
             name: generatedName,
           });
@@ -60,12 +67,24 @@ const handler: NextApiHandler = async (req, res) => {
             where: { userId: rule.userId },
             data: { generatedName },
           });
+        } catch (error) {
+          if (
+            (error instanceof GaxiosError &&
+              (error.response?.status === 400 ||
+                error.response?.status === 403)) ||
+            (error instanceof ApiResponseError && error.code === 401)
+          ) {
+            await disableRule(rule.userId);
+            continue;
+          }
+
+          throw error;
         }
       }
 
       res.status(204).end();
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       res.status(500).end();
     }
   } else {
