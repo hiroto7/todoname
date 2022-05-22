@@ -130,13 +130,13 @@ const ApplyButton: React.FC<{
         {status === "sending" ? (
           <Spinner animation="border" size="sm" />
         ) : (
-          "ルールを適用"
+          "このルールで名前を自動更新"
         )}
       </Button>
       {status === "success" ? (
         <p className="text-success text-center mt-2" ref={ref}>
           <i className="bi bi-check-circle-fill" />{" "}
-          <strong>ルールを適用し、名前を更新しました</strong>
+          <strong>ルールを適用しました</strong>
         </p>
       ) : status === "error" ? (
         <p className="text-danger text-center mt-2" ref={ref}>
