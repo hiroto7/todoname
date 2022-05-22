@@ -65,8 +65,8 @@ const handler: NextApiHandler<void> = async (req, res) => {
         } catch (error) {
           if (
             (error instanceof GaxiosError &&
-              (error.response?.status === 400 ||
-                error.response?.status === 403)) ||
+              error.response?.status !== undefined &&
+              [400, 401, 403].includes(error.response.status)) ||
             (error instanceof ApiResponseError && error.code === 401)
           ) {
             await disableRule(rule.userId);
