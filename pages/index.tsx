@@ -419,19 +419,7 @@ const Section3: React.FC<{
       <Button
         size="lg"
         className="w-100"
-        {...(rule &&
-        status !== "sending" &&
-        tasklist !== undefined &&
-        (!storedRule ||
-          (
-            [
-              "tasklist",
-              "beginningText",
-              "separator",
-              "endText",
-              "normalName",
-            ] as const
-          ).some((key) => rule[key] !== storedRule[key]))
+        {...(rule && status !== "sending" && tasklist !== undefined
           ? {
               onClick: async () => {
                 try {
