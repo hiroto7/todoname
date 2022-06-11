@@ -93,6 +93,13 @@ const handleBeforeunload = (event: BeforeUnloadEvent) => {
   event.returnValue = "";
 };
 
+const generateDefaultRule = (user: TwitterUser) => ({
+  beginningText: `${user.name}@`,
+  separator: "、",
+  endText: "",
+  normalName: user.name,
+});
+
 const Home: NextPage = () => {
   const router = useRouter();
   const { error } = router.query;
@@ -123,22 +130,17 @@ const Home: NextPage = () => {
   useEffect(() => {
     if (
       rule &&
-      storedRule &&
-      (
-        [
-          "tasklist",
-          "beginningText",
-          "separator",
-          "endText",
-          "normalName",
-        ] as const
-      ).some((key) => rule[key] !== storedRule[key])
+      twitter &&
+      ((["beginningText", "separator", "endText", "normalName"] as const).some(
+        (key) => rule[key] !== (storedRule ?? generateDefaultRule(twitter))[key]
+      ) ||
+        (storedRule && storedRule.tasklist !== rule.tasklist))
     ) {
       window.addEventListener("beforeunload", handleBeforeunload);
     }
 
     return () => window.removeEventListener("beforeunload", handleBeforeunload);
-  }, [rule, storedRule]);
+  }, [rule, storedRule, twitter]);
 
   useEffect(() => {
     if (
@@ -149,10 +151,7 @@ const Home: NextPage = () => {
     ) {
       setRule(
         storedRule ?? {
-          beginningText: `${twitter.name}@`,
-          separator: "、",
-          endText: "",
-          normalName: twitter.name,
+          ...generateDefaultRule(twitter),
           tasklist: undefined,
         }
       );
@@ -424,14 +423,14 @@ const Section3: React.FC<{
         storedRule &&
         status !== "sending" &&
         tasklist !== undefined &&
-        (
-          [
-            "tasklist",
-            "beginningText",
-            "separator",
-            "endText",
-            "normalName",
-          ] as const
+          (
+            [
+              "tasklist",
+              "beginningText",
+              "separator",
+              "endText",
+              "normalName",
+            ] as const
         ).some((key) => rule[key] !== storedRule[key])
           ? {
               onClick: async () => {
