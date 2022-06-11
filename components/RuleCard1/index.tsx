@@ -42,16 +42,10 @@ const RuleCard1: React.FC<{
     Rule,
     "normalName" | "beginningText" | "separator" | "endText"
   >;
-  onBeginningTextChange: (beginningText: string) => void;
-  onSeparatorChange: (separator: string) => void;
-  onEndTextChange: (endText: string) => void;
-}> = ({
-  user,
-  rule,
-  onBeginningTextChange,
-  onSeparatorChange,
-  onEndTextChange,
-}) => {
+  onChange: (
+    rule: Partial<Pick<Rule, "beginningText" | "separator" | "endText">>
+  ) => void;
+}> = ({ user, rule, onChange }) => {
   const { normalName, beginningText, separator, endText, tasklist } = rule;
   const tasks = useTasks(tasklist);
 
@@ -70,19 +64,19 @@ const RuleCard1: React.FC<{
                 : [user.name]
               ).flatMap((name) => [`${name}@`, `${name}/`, `${name} `])}
               text={beginningText}
-              onChange={onBeginningTextChange}
+              onChange={(beginningText) => onChange({ beginningText })}
               {...BEGINNING_TEXT}
             />
             <NameComponentInput
               examples={[`、`, `/`]}
               text={separator}
-              onChange={onSeparatorChange}
+              onChange={(separator) => onChange({ separator })}
               {...SEPARATOR}
             />
             <NameComponentInput
               examples={[]}
               text={endText}
-              onChange={onEndTextChange}
+              onChange={(endText) => onChange({ endText })}
               {...END_TEXT}
             />
           </fieldset>

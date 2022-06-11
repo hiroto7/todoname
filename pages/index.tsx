@@ -88,66 +88,9 @@ const SignInErrorAlert: React.FC<{ error: string }> = ({ error }) => (
   </Alert>
 );
 
-const ApplyButton: React.FC<{
-  rule: Pick<Rule, "beginningText" | "separator" | "endText" | "normalName"> & {
-    tasklist: string | undefined;
-  };
-  onComplete: () => void;
-}> = ({ rule, onComplete }) => {
-  const [status, setStatus] = useState<"sending" | "success" | "error">();
-
-  const ref = useRef<HTMLParagraphElement>(null);
-
-  useEffect(() => {
-    ref.current?.scrollIntoView();
-  }, [status]);
-
-  return (
-    <>
-      <Button
-        size="lg"
-        className="w-100"
-        disabled={
-          status === "sending" ||
-          rule.tasklist === undefined ||
-          rule.normalName.length === 0
-        }
-        onClick={
-          rule.tasklist === undefined || rule.normalName.length === 0
-            ? undefined
-            : async () => {
-                try {
-                  setStatus("sending");
-                  await axios.put("/api/rule", rule);
-                  setStatus("success");
-                  onComplete();
-                } catch (e) {
-                  setStatus("error");
-                }
-              }
-        }
-      >
-        {status === "sending" ? (
-          <Spinner animation="border" size="sm" />
-        ) : (
-          "このルールで名前を自動更新"
-        )}
-      </Button>
-      {status === "success" ? (
-        <p className="text-success text-center mt-2" ref={ref}>
-          <i className="bi bi-check-circle-fill" />{" "}
-          <strong>ルールを適用しました</strong>
-        </p>
-      ) : status === "error" ? (
-        <p className="text-danger text-center mt-2" ref={ref}>
-          <i className="bi bi-x-octagon-fill" />{" "}
-          <strong>ルールを適用できませんでした</strong>
-        </p>
-      ) : (
-        <></>
-      )}
-    </>
-  );
+const handleBeforeunload = (event: BeforeUnloadEvent) => {
+  event.preventDefault();
+  event.returnValue = "";
 };
 
 const Home: NextPage = () => {
@@ -165,19 +108,37 @@ const Home: NextPage = () => {
   const { data: google, error: googleError } =
     useSWR<oauth2_v2.Schema$Userinfo>("/api/google", fetcher, { onErrorRetry });
 
-  const {
-    data: storedRule,
-    error: ruleError,
-    mutate,
-  } = useSWR<Rule>("/api/rule", fetcher, {
-    onErrorRetry,
-  });
+  const { data: storedRule, error: ruleError } = useSWR<Rule>(
+    "/api/rule",
+    fetcher,
+    { onErrorRetry }
+  );
 
   const [rule, setRule] = useState<
     Pick<Rule, "beginningText" | "separator" | "endText" | "normalName"> & {
       tasklist: string | undefined;
     }
   >();
+
+  useEffect(() => {
+    if (
+      rule &&
+      storedRule &&
+      (
+        [
+          "tasklist",
+          "beginningText",
+          "separator",
+          "endText",
+          "normalName",
+        ] as const
+      ).some((key) => rule[key] !== storedRule[key])
+    ) {
+      window.addEventListener("beforeunload", handleBeforeunload);
+    }
+
+    return () => window.removeEventListener("beforeunload", handleBeforeunload);
+  }, [rule, storedRule]);
 
   useEffect(() => {
     if (
@@ -353,80 +314,18 @@ const Home: NextPage = () => {
           googleError.response?.status === 403)
       ) ? (
         <>
-          <section className="mt-5">
-            <h2>ToDoリストを選択</h2>
-            <p>ここで選択したToDoリストの内容から名前が生成されます。</p>
-            <p>
-              <small className="text-warning">
-                <i className="bi bi-exclamation-triangle-fill" />{" "}
-                選択したリストの内容は誰でも見られる状態になるため、機密情報が含まれないことを確認してください。公開できるリストがない場合は、先に
-                <a
-                  href="https://support.google.com/tasks/answer/7675771"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="link-warning"
-                >
-                  Google Tasksで新たなリストを作成
-                </a>
-                してください。
-              </small>
-            </p>
-
-            <Row className="justify-content-center">
-              <Col sm={10} md={8} lg={6}>
-                <TasklistPicker
-                  tasklist={rule.tasklist}
-                  onChange={(tasklist) => setRule({ ...rule, tasklist })}
-                />
-              </Col>
-            </Row>
-          </section>
+          <Section1
+            tasklist={rule.tasklist}
+            onChange={(tasklist) => setRule({ ...rule, tasklist })}
+          />
           {downCaret}
-
-          <section className="mt-5">
-            <h2>名前の生成ルールを指定</h2>
-
-            <Row className="g-4 justify-content-center">
-              <Col lg={10} xl={9} className="d-grid gap-4">
-                <RuleCard1
-                  user={twitter}
-                  rule={rule}
-                  onBeginningTextChange={(beginningText) =>
-                    setRule({ ...rule, beginningText })
-                  }
-                  onSeparatorChange={(separator) =>
-                    setRule({ ...rule, separator })
-                  }
-                  onEndTextChange={(endText) => setRule({ ...rule, endText })}
-                />
-                <RuleCard0
-                  user={twitter}
-                  normalName={rule.normalName}
-                  onChange={(normalName) => setRule({ ...rule, normalName })}
-                />
-              </Col>
-            </Row>
-          </section>
-
+          <Section2
+            user={twitter}
+            rule={rule}
+            onChange={(arg) => setRule({ ...rule, ...arg })}
+          />
           {downCaret}
-
-          <section className="mt-5">
-            <div className="mb-3">
-              <ApplyButton rule={rule} onComplete={mutate} />
-            </div>
-            <p>
-              このボタンを押すと、指定したルールで直ちに名前が更新されます。
-            </p>
-            <p>
-              また、15分ごとにこのルールで名前が更新されるようになります。
-              ただし、名前が手動で変更された場合は、自動更新が停止されます。
-            </p>
-            <p>
-              <small className="text-muted">
-                予告なく自動更新を停止したり、更新頻度を変更する場合があります。
-              </small>
-            </p>
-          </section>
+          <Section3 rule={rule} />
         </>
       ) : (
         <p className="text-muted text-center mt-5">
@@ -434,6 +333,152 @@ const Home: NextPage = () => {
         </p>
       )}
     </Layout>
+  );
+};
+
+const Section1: React.FC<{
+  tasklist: string | undefined;
+  onChange: (tasklist: string) => void;
+}> = ({ tasklist, onChange }) => (
+  <section className="mt-5">
+    <h2>ToDoリストを選択</h2>
+    <p>ここで選択したToDoリストの内容から名前が生成されます。</p>
+    <p>
+      <small className="text-warning">
+        <i className="bi bi-exclamation-triangle-fill" />{" "}
+        選択したリストの内容は誰でも見られる状態になるため、機密情報が含まれないことを確認してください。公開できるリストがない場合は、先に
+        <a
+          href="https://support.google.com/tasks/answer/7675771"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="link-warning"
+        >
+          Google Tasksで新たなリストを作成
+        </a>
+        してください。
+      </small>
+    </p>
+
+    <Row className="justify-content-center">
+      <Col sm={10} md={8} lg={6}>
+        <TasklistPicker tasklist={tasklist} onChange={onChange} />
+      </Col>
+    </Row>
+  </section>
+);
+
+const Section2: React.FC<{
+  user: TwitterUser;
+  rule: Pick<Rule, "beginningText" | "separator" | "endText" | "normalName"> & {
+    tasklist: string | undefined;
+  };
+  onChange: (
+    rule: Partial<
+      Pick<Rule, "beginningText" | "separator" | "endText" | "normalName">
+    >
+  ) => void;
+}> = ({ user, rule, onChange }) => (
+  <section className="mt-5">
+    <h2>名前の生成ルールを指定</h2>
+
+    <Row className="g-4 justify-content-center">
+      <Col lg={10} xl={9} className="d-grid gap-4">
+        <RuleCard1 user={user} rule={rule} onChange={onChange} />
+        <RuleCard0
+          user={user}
+          normalName={rule.normalName}
+          onChange={(normalName) => onChange({ normalName })}
+        />
+      </Col>
+    </Row>
+  </section>
+);
+
+const Section3: React.FC<{
+  rule: Pick<Rule, "beginningText" | "separator" | "endText" | "normalName"> & {
+    tasklist: string | undefined;
+  };
+}> = ({ rule }) => {
+  const [status, setStatus] = useState<"sending" | "success" | "error">();
+  const ref = useRef<HTMLParagraphElement>(null);
+
+  const { data: storedRule, mutate } = useSWR<
+    Pick<
+      Rule,
+      "beginningText" | "separator" | "endText" | "normalName" | "tasklist"
+    >
+  >("/api/rule", fetcher, { onErrorRetry });
+
+  useEffect(() => {
+    ref.current?.scrollIntoView();
+  }, [status]);
+
+  const { tasklist } = rule;
+
+  return (
+    <section className="mt-5">
+      <Button
+        size="lg"
+        className="w-100"
+        {...(rule &&
+        storedRule &&
+        status !== "sending" &&
+        tasklist !== undefined &&
+        (
+          [
+            "tasklist",
+            "beginningText",
+            "separator",
+            "endText",
+            "normalName",
+          ] as const
+        ).some((key) => rule[key] !== storedRule[key])
+          ? {
+              onClick: async () => {
+                try {
+                  setStatus("sending");
+                  await axios.put("/api/rule", rule);
+                  setStatus("success");
+                  mutate({ ...rule, tasklist });
+                } catch (e) {
+                  setStatus("error");
+                }
+              },
+            }
+          : { disabled: true })}
+      >
+        {status === "sending" ? (
+          <Spinner animation="border" size="sm" />
+        ) : (
+          "このルールで名前を自動更新"
+        )}
+      </Button>
+      {status === "success" ? (
+        <p className="text-success text-center mt-2" ref={ref}>
+          <i className="bi bi-check-circle-fill" />{" "}
+          <strong>ルールを適用しました</strong>
+        </p>
+      ) : status === "error" ? (
+        <p className="text-danger text-center mt-2" ref={ref}>
+          <i className="bi bi-x-octagon-fill" />{" "}
+          <strong>ルールを適用できませんでした</strong>
+        </p>
+      ) : (
+        <></>
+      )}
+      <p className="mt-3">
+        このボタンを押すと、指定したルールで直ちに名前が更新されます。
+      </p>
+      <p>
+        また、15分ごとにこのルールで名前が更新されるようになります。
+        ただし、名前が手動で変更された場合は、自動更新が停止されます。
+      </p>
+      <p>
+        <small className="text-muted">
+          予告なく自動更新を停止したり、更新頻度を変更する場合があります。
+        </small>
+      </p>
+    </section>
   );
 };
 
