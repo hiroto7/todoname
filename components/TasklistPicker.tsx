@@ -28,9 +28,7 @@ const TasklistPicker: React.FC<{
   const tasklist = tasklists?.find((tasklist) => tasklist.id === tasklistId);
 
   useEffect(() => {
-    if (!tasklist && defaultTasklist) {
-      onChange(defaultTasklist.id!);
-    }
+    if (!tasklist && defaultTasklist) onChange(defaultTasklist.id!);
   }, [defaultTasklist, onChange, tasklist]);
 
   const tasks = useTasks(tasklist?.id);
