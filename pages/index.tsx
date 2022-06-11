@@ -420,9 +420,9 @@ const Section3: React.FC<{
         size="lg"
         className="w-100"
         {...(rule &&
-        storedRule &&
         status !== "sending" &&
         tasklist !== undefined &&
+        (!storedRule ||
           (
             [
               "tasklist",
@@ -431,7 +431,7 @@ const Section3: React.FC<{
               "endText",
               "normalName",
             ] as const
-        ).some((key) => rule[key] !== storedRule[key])
+          ).some((key) => rule[key] !== storedRule[key]))
           ? {
               onClick: async () => {
                 try {
