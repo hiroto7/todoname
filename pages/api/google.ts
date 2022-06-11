@@ -1,6 +1,6 @@
 import assert from "assert";
+import { GaxiosError } from "gaxios";
 import { google, type oauth2_v2 } from "googleapis";
-import { GaxiosError } from "googleapis-common";
 import type { NextApiHandler } from "next";
 import { getSession } from "next-auth/react";
 import prisma from "../../lib/prisma";

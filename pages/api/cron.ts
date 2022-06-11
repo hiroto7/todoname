@@ -1,5 +1,5 @@
 import assert from "assert";
-import { GaxiosError } from "googleapis-common";
+import { GaxiosError } from "gaxios";
 import type { NextApiHandler } from "next";
 import { ApiResponseError, TwitterApi } from "twitter-api-v2";
 import disableRule from "../../lib/disableRule";
