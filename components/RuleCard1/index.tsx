@@ -21,7 +21,7 @@ const NameComponentInput: React.FC<{
   <Form.Group as={Row} xs={2}>
     <Form.Label column>{title}</Form.Label>
     <Col>
-      <WithDatalist datalistId={`${name}Datalist`} options={examples}>
+      <WithDatalist options={examples}>
         {(datalistId) => (
           <Form.Control
             value={text}

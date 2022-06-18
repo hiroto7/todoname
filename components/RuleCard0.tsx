@@ -34,7 +34,7 @@ const RuleCard0: React.FC<{
         <Card.Text>
           未完了タスクがないとき、ここに入力したテキストがそのまま名前になります。
         </Card.Text>
-        <WithDatalist datalistId="normalNameDatalist" options={[user.name]}>
+        <WithDatalist options={[user.name]}>
           {(datalistId) => (
             <Form.Control
               value={normalName}

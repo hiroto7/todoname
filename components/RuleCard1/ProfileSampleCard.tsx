@@ -1,5 +1,5 @@
 import type { tasks_v1 } from "googleapis";
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
   Card,
   Col,
@@ -23,11 +23,7 @@ const NameSampleComponent: React.FC<{
   children: string;
 }> = ({ color, title, children }) => (
   <OverlayTrigger
-    overlay={
-      <Tooltip id="tooltip1">
-        {children ? title : `${title}はありません`}
-      </Tooltip>
-    }
+    overlay={<Tooltip>{children ? title : `${title}はありません`}</Tooltip>}
   >
     {children ? (
       <span
@@ -87,6 +83,8 @@ const ProfileSampleCard: React.FC<{
   user: TwitterUser;
 }> = ({ tasks, beginningText, separator, endText, user }) => {
   const [showDummies, setShowDummies] = useState(false);
+  const id = useId();
+
   const apparentlyShowDummies = (tasks && tasks.length === 0) || showDummies;
   const apparentTasks = apparentlyShowDummies ? DUMMY_TASKS : tasks;
 
@@ -97,7 +95,7 @@ const ProfileSampleCard: React.FC<{
           <Col xs="auto">サンプル</Col>
           <Col xs="auto">
             <Form.Check
-              id="showDummiesCheck"
+              id={id}
               type="switch"
               checked={apparentlyShowDummies}
               disabled={apparentlyShowDummies && (!tasks || tasks.length === 0)}

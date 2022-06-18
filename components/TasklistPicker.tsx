@@ -64,11 +64,7 @@ const TasklistPicker: React.FC<{
         )}
         {tasklists ? (
           <Col xs="auto">
-            <DropdownButton
-              id="tasklist-dropdown-button"
-              title="変更"
-              variant="secondary"
-            >
+            <DropdownButton title="変更" variant="secondary">
               {tasklists.map((tasklist) => (
                 <Dropdown.Item
                   key={tasklist.id}
