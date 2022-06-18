@@ -13,23 +13,17 @@ export const TwitterProfileName: React.FC<{
     <>{children}</>
   );
 
-type TwitterUser = Required<
-  Pick<UserV2, "id" | "name" | "username" | "profile_image_url" | "protected">
->;
-
 export const TwitterProfileSummary: React.FC<{
-  user: Omit<TwitterUser, "name">;
-  name: React.ReactNode;
-}> = ({ user, name }) => (
-  <ProfileSummary
-    name={
-      <TwitterProfileName isProtected={user.protected}>
-        {name}
-      </TwitterProfileName>
-    }
-    id={`@${user.username}`}
-    image={user.profile_image_url}
-  />
+  user: Required<
+    Pick<UserV2, "id" | "username" | "profile_image_url" | "protected">
+  >;
+  children: React.ReactNode;
+}> = ({ user, children }) => (
+  <ProfileSummary id={`@${user.username}`} image={user.profile_image_url}>
+    <TwitterProfileName isProtected={user.protected}>
+      {children}
+    </TwitterProfileName>
+  </ProfileSummary>
 );
 
 export const ProfileImage: React.FC<{ src: string }> = ({ src }) => (
@@ -38,15 +32,15 @@ export const ProfileImage: React.FC<{ src: string }> = ({ src }) => (
 
 const ProfileSummary: React.FC<{
   id: string;
-  name: React.ReactNode;
+  children: React.ReactNode;
   image: string;
-}> = ({ id, name, image }) => (
+}> = ({ id, children, image }) => (
   <Row className="gx-3">
     <Col xs="auto">
       <ProfileImage src={image} />
     </Col>
     <Col>
-      <div>{name}</div>
+      <div>{children}</div>
       <div>
         <small className="text-muted">{id}</small>
       </div>

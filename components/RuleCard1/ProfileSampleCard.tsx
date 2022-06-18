@@ -106,26 +106,22 @@ const ProfileSampleCard: React.FC<{
         </Row>
       </Card.Header>
       <Card.Body>
-        <ProfileSummary
-          name={
-            apparentTasks ? (
-              <TwitterProfileName isProtected={user.protected}>
-                <NameSample
-                  tasks={apparentTasks}
-                  beginningText={beginningText}
-                  separator={separator}
-                  endText={endText}
-                />
-              </TwitterProfileName>
-            ) : (
-              <Placeholder as="div" animation="glow">
-                <Placeholder xs={6} />
-              </Placeholder>
-            )
-          }
-          id={`@${user.username}`}
-          image={user.profile_image_url}
-        />
+        <ProfileSummary id={`@${user.username}`} image={user.profile_image_url}>
+          {apparentTasks ? (
+            <TwitterProfileName isProtected={user.protected}>
+              <NameSample
+                tasks={apparentTasks}
+                beginningText={beginningText}
+                separator={separator}
+                endText={endText}
+              />
+            </TwitterProfileName>
+          ) : (
+            <Placeholder animation="glow">
+              <Placeholder xs={6} />
+            </Placeholder>
+          )}
+        </ProfileSummary>
       </Card.Body>
     </Card>
   );

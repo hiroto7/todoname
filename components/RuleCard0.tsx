@@ -14,10 +14,9 @@ const ProfileSampleCard0: React.FC<{
   <Card>
     <Card.Header>サンプル</Card.Header>
     <Card.Body>
-      <TwitterProfileSummary
-        user={user}
-        name={name || <i className="text-danger">名前を入力してください</i>}
-      />
+      <TwitterProfileSummary user={user}>
+        {name || <i className="text-danger">名前を入力してください</i>}
+      </TwitterProfileSummary>
     </Card.Body>
   </Card>
 );
