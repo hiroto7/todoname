@@ -25,10 +25,11 @@ import Layout from "../components/Layout";
 import { ProfileImage, TwitterProfileName } from "../components/ProfileSummary";
 import RuleCard0 from "../components/RuleCard0";
 import RuleCard1 from "../components/RuleCard1";
+import SignInWithGoogleButton from "../components/SignInWithGoogleButton";
+import SignInWithTwitterButton from "../components/SignInWithTwitterButton";
 import TasklistPicker from "../components/TasklistPicker";
 import fetcher from "../lib/fetcher";
 import onErrorRetry from "../lib/onErrorRetry";
-import styles from "../styles/SignInWithGoogleButton.module.css";
 
 const SignedInAccountOptionsButton: React.FC<{ id: string; name: string }> = ({
   id,
@@ -205,14 +206,11 @@ const Home: NextPage = () => {
                 {twitterError instanceof AxiosError &&
                 twitterError.response?.status === 401 ? (
                   <Col xs="auto">
-                    <Button
-                      variant="secondary"
+                    <SignInWithTwitterButton
                       onClick={() =>
                         signIn("twitter", { callbackUrl: router.pathname })
                       }
-                    >
-                      <i className="bi bi-twitter" /> Twitterでログイン
-                    </Button>
+                    />
                   </Col>
                 ) : twitter ? (
                   <Col sm="auto">
@@ -246,8 +244,8 @@ const Home: NextPage = () => {
                     </Row>
                   </Col>
                 ) : (
-                  <Col xs={6} sm={3}>
-                    <Placeholder.Button variant="secondary" xs={12} />
+                  <Col xs="auto">
+                    <SignInWithTwitterButton disabled />
                   </Col>
                 )}
               </Row>
@@ -265,8 +263,7 @@ const Home: NextPage = () => {
                 (googleError.response?.status === 401 ||
                   googleError.response?.status === 403) ? (
                   <Col xs="auto">
-                    <button
-                      className={styles["btn"]}
+                    <SignInWithGoogleButton
                       onClick={() =>
                         signIn("google", { callbackUrl: router.pathname })
                       }
@@ -289,7 +286,7 @@ const Home: NextPage = () => {
                   </Col>
                 ) : (
                   <Col xs="auto">
-                    <button className={styles["btn"]} disabled />
+                    <SignInWithGoogleButton disabled />
                   </Col>
                 )}
               </Row>

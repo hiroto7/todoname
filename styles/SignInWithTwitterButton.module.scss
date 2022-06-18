@@ -1,0 +1,18 @@
+@import "~bootstrap/scss/functions";
+@import "~bootstrap/scss/variables";
+// @import "~bootstrap/scss/maps";
+@import "~bootstrap/scss/mixins";
+// @import "~bootstrap/scss/root";
+
+$color: #1d9bf0;
+
+.btn-twitter {
+  @include button-variant(
+    $background: $color,
+    $border: $color,
+    $color: white,
+    $hover-color: white,
+    $active-color: white,
+    $disabled-color: white
+  );
+}
