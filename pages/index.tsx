@@ -14,7 +14,6 @@ import {
   Col,
   Dropdown,
   OverlayTrigger,
-  Placeholder,
   Row,
   Spinner,
   Tooltip,
@@ -57,6 +56,20 @@ const SignedInAccountOptionsButton: React.FC<{ id: string; name: string }> = ({
     </Dropdown>
   );
 };
+
+const SignedIn: React.FC<{
+  id: string;
+  name: string;
+  image: string;
+  children: (image: React.ReactNode) => React.ReactNode;
+}> = ({ id, name, image, children }) => (
+  <Row className="align-items-center gx-3">
+    <Col>
+      <SignedInAccountOptionsButton id={id} name={name} />
+    </Col>
+    <Col xs="auto">{children(<ProfileImage src={image} />)}</Col>
+  </Row>
+);
 
 const downCaret = (
   <div className="text-center mt-5">
@@ -214,15 +227,12 @@ const Home: NextPage = () => {
                   </Col>
                 ) : twitter ? (
                   <Col sm="auto">
-                    <Row className="align-items-center gx-3">
-                      <Col>
-                        <SignedInAccountOptionsButton
-                          id="twitter"
-                          name="Twitter"
-                        />
-                      </Col>
-
-                      <Col xs="auto">
+                    <SignedIn
+                      id="twitter"
+                      name="Twitter"
+                      image={twitter.profile_image_url}
+                    >
+                      {(image) => (
                         <OverlayTrigger
                           overlay={(props) => (
                             // @ts-expect-error
@@ -236,12 +246,10 @@ const Home: NextPage = () => {
                             </Tooltip>
                           )}
                         >
-                          <div>
-                            <ProfileImage src={twitter.profile_image_url} />
-                          </div>
+                          <div>{image}</div>
                         </OverlayTrigger>
-                      </Col>
-                    </Row>
+                      )}
+                    </SignedIn>
                   </Col>
                 ) : (
                   <Col xs="auto">
@@ -271,18 +279,9 @@ const Home: NextPage = () => {
                   </Col>
                 ) : google ? (
                   <Col sm="auto">
-                    <Row className="align-items-center gx-3">
-                      <Col>
-                        <SignedInAccountOptionsButton
-                          id="google"
-                          name="Google"
-                        />
-                      </Col>
-
-                      <Col xs="auto">
-                        <ProfileImage src={google.picture!} />
-                      </Col>
-                    </Row>
+                    <SignedIn id="google" name="Google" image={google.picture!}>
+                      {(image) => image}
+                    </SignedIn>
                   </Col>
                 ) : (
                   <Col xs="auto">
