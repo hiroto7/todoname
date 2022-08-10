@@ -253,7 +253,7 @@ const Home: NextPage = () => {
                   </Col>
                 ) : (
                   <Col xs="auto">
-                    <SignInWithTwitterButton disabled />
+                    <Spinner animation="border" variant="primary" />
                   </Col>
                 )}
               </Row>
@@ -285,7 +285,7 @@ const Home: NextPage = () => {
                   </Col>
                 ) : (
                   <Col xs="auto">
-                    <SignInWithGoogleButton disabled />
+                    <Spinner animation="border" variant="primary" />
                   </Col>
                 )}
               </Row>
