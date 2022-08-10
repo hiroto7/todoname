@@ -225,7 +225,10 @@ const Home: NextPage = () => {
 
         <Row className="justify-content-center">
           <Col className="d-grid gap-4" lg={10} xl={9}>
-            <Card body>
+            <Card
+              body
+              {...(twitter === null && google ? { border: "primary" } : {})}
+            >
               <Row className="gy-3 align-items-center justify-content-center">
                 <Col xs={12} sm>
                   <Card.Title>Twitterアカウント</Card.Title>
@@ -275,7 +278,10 @@ const Home: NextPage = () => {
               </Row>
             </Card>
 
-            <Card body>
+            <Card
+              body
+              {...(twitter && google === null ? { border: "primary" } : {})}
+            >
               <Row className="gy-3 align-items-center justify-content-center">
                 <Col xs={12} sm>
                   <Card.Title>Googleアカウント</Card.Title>
