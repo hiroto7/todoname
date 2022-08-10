@@ -114,20 +114,37 @@ const generateDefaultRule = (user: TwitterUser) => ({
   normalName: user.name,
 });
 
+const useTwitter = () => {
+  const { data, error } = useSWR<TwitterUser>("/api/twitter", fetcher, {
+    onErrorRetry,
+  });
+
+  return error instanceof AxiosError && error.response?.status === 401
+    ? null
+    : data;
+};
+
+const useGoogle = () => {
+  const { data, error } = useSWR<oauth2_v2.Schema$Userinfo>(
+    "/api/google",
+    fetcher,
+    { onErrorRetry }
+  );
+
+  return error instanceof AxiosError &&
+    (error.response?.status === 401 || error.response?.status === 403)
+    ? null
+    : data;
+};
+
 const Home: NextPage = () => {
   const router = useRouter();
   const { error } = router.query;
 
   assert(!(error instanceof Array));
 
-  const { data: twitter, error: twitterError } = useSWR<TwitterUser>(
-    "/api/twitter",
-    fetcher,
-    { onErrorRetry }
-  );
-
-  const { data: google, error: googleError } =
-    useSWR<oauth2_v2.Schema$Userinfo>("/api/google", fetcher, { onErrorRetry });
+  const twitter = useTwitter();
+  const google = useGoogle();
 
   const { data: storedRule, error: ruleError } = useSWR<Rule>(
     "/api/rule",
@@ -216,8 +233,7 @@ const Home: NextPage = () => {
                     ログインしたアカウントのプロフィールの名前が書き換えられます。
                   </Card.Text>
                 </Col>
-                {twitterError instanceof AxiosError &&
-                twitterError.response?.status === 401 ? (
+                {twitter === null ? (
                   <Col xs="auto">
                     <SignInWithTwitterButton
                       onClick={() =>
@@ -267,9 +283,7 @@ const Home: NextPage = () => {
                     ログインしたアカウントのGoogle Tasksの内容が使用されます。
                   </Card.Text>
                 </Col>
-                {googleError instanceof AxiosError &&
-                (googleError.response?.status === 401 ||
-                  googleError.response?.status === 403) ? (
+                {google === null ? (
                   <Col xs="auto">
                     <SignInWithGoogleButton
                       onClick={() =>
@@ -296,18 +310,7 @@ const Home: NextPage = () => {
 
       {downCaret}
 
-      {rule &&
-      twitter &&
-      !(
-        twitterError instanceof AxiosError &&
-        twitterError.response?.status === 401
-      ) &&
-      google &&
-      !(
-        googleError instanceof AxiosError &&
-        (googleError.response?.status === 401 ||
-          googleError.response?.status === 403)
-      ) ? (
+      {rule && twitter && google ? (
         <>
           <Section1
             tasklist={rule.tasklist}
