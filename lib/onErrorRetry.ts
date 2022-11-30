@@ -1,21 +1,9 @@
 import { AxiosError } from "axios";
-import { SWRConfig, type BareFetcher, type Fetcher } from "swr";
-import type {
-  PublicConfiguration,
-  Revalidator,
-  RevalidatorOptions,
-} from "swr/dist/types";
+import { SWRConfig, SWRConfiguration } from "swr";
 
-const onErrorRetry = <
-  Data = any,
-  Error = any,
-  Fn extends Fetcher = BareFetcher
->(
-  err: Error,
-  key: string,
-  config: Readonly<PublicConfiguration<Data, Error, Fn>>,
-  revalidate: Revalidator,
-  revalidateOpts: Required<RevalidatorOptions>
+const onErrorRetry: NonNullable<SWRConfiguration["onErrorRetry"]> = (
+  err,
+  ...args
 ) => {
   if (
     err instanceof AxiosError &&
@@ -25,14 +13,7 @@ const onErrorRetry = <
     return;
   }
 
-  SWRConfig.default.onErrorRetry(
-    err,
-    key,
-    // @ts-expect-error
-    config,
-    revalidate,
-    revalidateOpts
-  );
+  SWRConfig.defaultValue.onErrorRetry(err, ...args);
 };
 
 export default onErrorRetry;

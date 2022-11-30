@@ -1,4 +1,5 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import assert from "assert";
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import TwitterProvider from "next-auth/providers/twitter";
@@ -37,6 +38,7 @@ export default NextAuth({
   },
   events: {
     async signIn({ account }) {
+      assert(account !== null);
       await prisma.account.update({
         where: {
           provider_providerAccountId: {
